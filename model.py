@@ -101,30 +101,30 @@ cumulative_materials = {}
 
 for year in YEARS:
     with st.expander(f"Year {year} Inputs"):
+        # UK Inputs
         uk_lines = st.number_input(f"UK Lines ({year})", 0, 10, 0)
         uk_power = st.slider(f"UK % Power ({year})", 0, 100, 0)
         st.markdown("**UK Cell Mix (%)** (must sum to 100%)")
         uk_mix_nmc1 = st.number_input(f"NMC Cell 1 (%) - UK {year}", 0, 100, 0)
         uk_mix_nmc2 = st.number_input(f"NMC Cell 2 (%) - UK {year}", 0, 100, 0)
         uk_mix_lfp = st.number_input(f"LFP (%) - UK {year}", 0, 100, 0)
-        if uk_mix_nmc1 + uk_mix_nmc2 + uk_mix_lfp != 100:
-            st.error(f"UK mix for {year} must sum to 100%.")
-            continue
+        uk_valid = (uk_mix_nmc1 + uk_mix_nmc2 + uk_mix_lfp == 100)
+
         uk_silicon = {}
         if uk_mix_nmc1 > 0:
             uk_silicon["NMC Cell 1"] = st.selectbox(f"UK NMC Cell 1 Silicon % ({year})", SILICON_PCTS, key=f"uks1{year}")
         if uk_mix_nmc2 > 0:
             uk_silicon["NMC Cell 2"] = st.selectbox(f"UK NMC Cell 2 Silicon % ({year})", SILICON_PCTS, key=f"uks2{year}")
 
+        # India Inputs
         in_lines = st.number_input(f"India Lines ({year})", 0, 10, 0)
         in_power = st.slider(f"India % Power ({year})", 0, 210, 0)
         st.markdown("**India Cell Mix (%)** (must sum to 100%)")
         in_mix_nmc1 = st.number_input(f"NMC Cell 1 (%) - India {year}", 0, 100, 0)
         in_mix_nmc2 = st.number_input(f"NMC Cell 2 (%) - India {year}", 0, 100, 0)
         in_mix_lfp = st.number_input(f"LFP (%) - India {year}", 0, 100, 0)
-        if in_mix_nmc1 + in_mix_nmc2 + in_mix_lfp != 100:
-            st.error(f"India mix for {year} must sum to 100%.")
-            continue
+        in_valid = (in_mix_nmc1 + in_mix_nmc2 + in_mix_lfp == 100)
+
         in_silicon = {}
         if in_mix_nmc1 > 0:
             in_silicon["NMC Cell 1"] = st.selectbox(f"India NMC Cell 1 Silicon % ({year})", SILICON_PCTS, key=f"ins1{year}")
@@ -133,12 +133,29 @@ for year in YEARS:
 
         energy_mix = st.selectbox(f"Energy Mix ({year})", list(ENERGY_MIXES.keys()), key=f"mix{year}")
 
-    uk_energy, uk_cells, uk_co2, uk_water, uk_materials = calc_site(
-        uk_lines, uk_power, {"NMC Cell 1": uk_mix_nmc1, "NMC Cell 2": uk_mix_nmc2, "LFP": uk_mix_lfp}, uk_silicon
-    )
-    in_energy, in_cells, in_co2, in_water, in_materials = calc_site(
-        in_lines, in_power, {"NMC Cell 1": in_mix_nmc1, "NMC Cell 2": in_mix_nmc2, "LFP": in_mix_lfp}, in_silicon
-    )
+    uk_energy = uk_cells = uk_co2 = uk_water = 0
+    uk_materials = {}
+    if uk_valid:
+        uk_energy, uk_cells, uk_co2, uk_water, uk_materials = calc_site(
+            uk_lines, uk_power,
+            {"NMC Cell 1": uk_mix_nmc1, "NMC Cell 2": uk_mix_nmc2, "LFP": uk_mix_lfp},
+            uk_silicon
+        )
+    else:
+        if uk_lines > 0:
+            st.warning(f"UK mix for {year} does not sum to 100%. Skipping UK calculations.")
+
+    in_energy = in_cells = in_co2 = in_water = 0
+    in_materials = {}
+    if in_valid:
+        in_energy, in_cells, in_co2, in_water, in_materials = calc_site(
+            in_lines, in_power,
+            {"NMC Cell 1": in_mix_nmc1, "NMC Cell 2": in_mix_nmc2, "LFP": in_mix_lfp},
+            in_silicon
+        )
+    else:
+        if in_lines > 0:
+            st.warning(f"India mix for {year} does not sum to 100%. Skipping India calculations.")
 
     total_energy = uk_energy + in_energy
     total_cells = uk_cells + in_cells
@@ -148,7 +165,7 @@ for year in YEARS:
 
     # Merge material dicts
     year_materials = {}
-    for m, v in {**uk_materials, **in_materials}.items():
+    for m in set(uk_materials) | set(in_materials):
         year_materials[m] = uk_materials.get(m, 0) + in_materials.get(m, 0)
 
     # Update cumulative materials
@@ -164,8 +181,9 @@ for year in YEARS:
         "Total Cost (£)": total_cost
     })
 
-    mat_df = pd.DataFrame(year_materials.items(), columns=["Material", f"{year} Qty"])
-    annual_materials_list.append(mat_df)
+    if year_materials:
+        mat_df = pd.DataFrame(year_materials.items(), columns=["Material", f"{year} Qty"])
+        annual_materials_list.append(mat_df)
 
 # -------------------------
 # OUTPUTS
@@ -182,8 +200,11 @@ st.dataframe(df.style.format({
 }))
 
 st.subheader("Annual Material Usage")
-annual_materials_df = pd.concat(annual_materials_list, axis=1)
-st.dataframe(annual_materials_df)
+if annual_materials_list:
+    annual_materials_df = pd.concat(annual_materials_list, axis=1)
+    st.dataframe(annual_materials_df)
+else:
+    st.info("No valid annual material usage data to display.")
 
 st.subheader("Cumulative Totals (2027–2035)")
 cum = df.drop(columns=["Year"]).sum(numeric_only=True)
@@ -197,12 +218,17 @@ st.dataframe(cum_df.style.format({
 }))
 
 st.subheader("Cumulative Material Usage")
-cum_mat_df = pd.DataFrame(cumulative_materials.items(), columns=["Material", "Total Qty"])
-st.dataframe(cum_mat_df)
+if cumulative_materials:
+    cum_mat_df = pd.DataFrame(cumulative_materials.items(), columns=["Material", "Total Qty"])
+    st.dataframe(cum_mat_df)
+else:
+    st.info("No material usage data available.")
 
 st.subheader("Annual CO₂ Emissions (tCO₂)")
-st.bar_chart(df.set_index("Year")["Total CO2 (tCO2)"])
+if not df.empty:
+    st.bar_chart(df.set_index("Year")["Total CO2 (tCO2)"])
 
 st.subheader("Cumulative CO₂ Emissions (tCO₂)")
-df["Cumulative CO2 (tCO2)"] = df["Total CO2 (tCO2)"].cumsum()
-st.line_chart(df.set_index("Year")["Cumulative CO2 (tCO2)"])
+if not df.empty:
+    df["Cumulative CO2 (tCO2)"] = df["Total CO2 (tCO2)"].cumsum()
+    st.line_chart(df.set_index("Year")["Cumulative CO2 (tCO2)"])
