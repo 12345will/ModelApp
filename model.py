@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 
 # -------------------------
 # CONFIG
@@ -10,20 +9,19 @@ UK_PRICE_PER_KWH = 0.258  # GBP
 INDIA_PRICE_PER_KWH = 7.38 * GBP_PER_INR
 
 YEARS = list(range(2027, 2036))
-CELL_TYPES = ["NMC Cell 1", "NMC Cell 2", "LFP"]
-SILICON_PCTS = [3, 5, 10, 15, 20]
 ENERGY_MIXES = {
     "100% Grid": lambda x: 2777.40274 * (x ** 0.288551),
     "PPA:Grid (70:30)": lambda x: 784.3886 * (x ** 0.396496),
     "Grid+Gas (30% demand)": lambda x: 1460.00464 * (x ** 0.534148)
 }
+CELL_TYPES = ["NMC Cell 1", "NMC Cell 2", "LFP"]
+SILICON_PCTS = [3, 5, 10, 15, 20]
 
 # -------------------------
 # MATERIAL TABLES (placeholders)
 # -------------------------
 materials_data = {
     "NMC Cell 1": {
-        "unit": "kg",
         "materials": {
             "NCM": 0.5, "SP-01": 0.5, "PVDF-1": 0.5, "NMP": 0.5, "Boehmite": 0.5,
             "PVDF-2": 0.5, "Graphite": 0.5, "SWCNT": 0.5, "PAA": 0.5, "Anoder Binder": 0.5,
@@ -39,7 +37,6 @@ materials_data = {
         "co2_water": {3: (2, 5), 5: (3, 6), 10: (4, 7), 15: (5, 8), 20: (6, 9)}
     },
     "NMC Cell 2": {
-        "unit": "kg",
         "materials": {
             "NCM - CAM powder": 0.2, "SP-01": 0.2, "PVDF-1": 0.2, "NMP": 0.2, "Boehmite": 0.2,
             "PVDF-2": 0.2, "Graphite": 0.2, "SWCNT": 0.2, "MWCNT": 0.2, "PAA": 0.2,
@@ -55,7 +52,6 @@ materials_data = {
         "co2_water": {3: (2, 3), 5: (3, 4), 10: (4, 5), 15: (5, 6), 20: (6, 7)}
     },
     "LFP": {
-        "unit": "kg",
         "materials": {
             "Polypropylene": 0.3, "Aluminium Foil": 0.3, "NMP Solvent - Cathode": 0.3,
             "SBR Binder - Cathode": 0.3, "Polyethylene Terephthalate": 0.3,
@@ -67,110 +63,146 @@ materials_data = {
             "Copper Foil - Anode": 0.3, "Polyethylene - Separator": 0.3,
             "CMC Binder - Cathode": 0.3, "Carbon Black - Cathode": 0.3
         },
-        "co2_water": {None: (8, 9)}  # no silicon %
+        "co2_water": {None: (8, 9)}
     }
 }
 
 # -------------------------
 # CALCULATIONS
 # -------------------------
-def calculate_year(year, uk_lines, uk_power_pct, uk_cell, uk_silicon_pct,
-                   in_lines, in_power_pct, in_cell, in_silicon_pct, energy_mix):
-    results = {}
-    # UK Production
-    uk_energy_gwh = uk_lines * 50 * (uk_power_pct / 100)
-    uk_cells = uk_lines * 300 * (uk_power_pct / 100)
-    uk_emissions = ENERGY_MIXES[energy_mix](uk_energy_gwh)
-    if "NMC" in uk_cell:
-        co2_kwh, water_kwh = materials_data[uk_cell]["co2_water"][uk_silicon_pct]
-    else:
-        co2_kwh, water_kwh = materials_data[uk_cell]["co2_water"][None]
-    uk_co2 = uk_energy_gwh * 1e6 * co2_kwh / 1e3  # tCO2
-    uk_water = uk_energy_gwh * 1e6 * water_kwh / 1e3  # m³
-    uk_cost = uk_energy_gwh * 1e6 * UK_PRICE_PER_KWH
-
-    # India Production
-    in_energy_gwh = in_lines * 50 * (in_power_pct / 100)
-    in_cells = in_lines * 300 * (in_power_pct / 100)
-    in_emissions = ENERGY_MIXES[energy_mix](in_energy_gwh)
-    if "NMC" in in_cell:
-        co2_kwh_i, water_kwh_i = materials_data[in_cell]["co2_water"][in_silicon_pct]
-    else:
-        co2_kwh_i, water_kwh_i = materials_data[in_cell]["co2_water"][None]
-    in_co2 = in_energy_gwh * 1e6 * co2_kwh_i / 1e3
-    in_water = in_energy_gwh * 1e6 * water_kwh_i / 1e3
-    in_cost = in_energy_gwh * 1e6 * INDIA_PRICE_PER_KWH
-
-    # Materials
-    total_materials = {}
-    for site_cell, cell_count in [(uk_cell, uk_cells), (in_cell, in_cells)]:
-        for mat, qty in materials_data[site_cell]["materials"].items():
-            total_materials[mat] = total_materials.get(mat, 0) + qty * cell_count
-
-    results.update({
-        "Year": year,
-        "UK Cells": uk_cells,
-        "India Cells": in_cells,
-        "Total Cells": uk_cells + in_cells,
-        "UK Energy (GWh)": uk_energy_gwh,
-        "India Energy (GWh)": in_energy_gwh,
-        "Total Energy (GWh)": uk_energy_gwh + in_energy_gwh,
-        "UK CO2 (t)": uk_co2,
-        "India CO2 (t)": in_co2,
-        "Total CO2 (t)": uk_co2 + in_co2,
-        "UK Water (m³)": uk_water,
-        "India Water (m³)": in_water,
-        "Total Water (m³)": uk_water + in_water,
-        "UK Cost (£)": uk_cost,
-        "India Cost (£)": in_cost,
-        "Total Cost (£)": uk_cost + in_cost
-    })
-    return results, total_materials
+def calc_site(lines, power_pct, mix, silicon_pcts):
+    energy_gwh = lines * 50 * (power_pct / 100)
+    total_cells = lines * 300 * (power_pct / 100)
+    site_materials = {}
+    total_co2 = 0
+    total_water = 0
+    for cell_type, pct in mix.items():
+        cells = total_cells * (pct / 100)
+        if cells <= 0:
+            continue
+        if "NMC" in cell_type:
+            co2_kwh, water_kwh = materials_data[cell_type]["co2_water"][silicon_pcts[cell_type]]
+        else:
+            co2_kwh, water_kwh = materials_data[cell_type]["co2_water"][None]
+        total_co2 += energy_gwh * (pct / 100) * 1e6 * co2_kwh / 1e3
+        total_water += energy_gwh * (pct / 100) * 1e6 * water_kwh / 1e3
+        for mat, qty in materials_data[cell_type]["materials"].items():
+            site_materials[mat] = site_materials.get(mat, 0) + qty * cells
+    return energy_gwh, total_cells, total_co2, total_water, site_materials
 
 # -------------------------
-# STREAMLIT UI
+# STREAMLIT APP
 # -------------------------
 st.title("Agratas Corporate Carbon Sensitivity Model (2027–2035)")
 
 year_data = []
-material_totals_cumulative = {}
+annual_materials_list = []
+cumulative_materials = {}
 
 for year in YEARS:
-    st.sidebar.subheader(f"Year {year}")
-    uk_lines = st.sidebar.number_input(f"UK Lines ({year})", 0, 10, 0)
-    uk_power_pct = st.sidebar.slider(f"UK % Power ({year})", 0, 100, 0)
-    uk_cell = st.sidebar.selectbox(f"UK Cell Type ({year})", CELL_TYPES, key=f"ukcell{year}")
-    uk_silicon_pct = st.sidebar.selectbox(f"UK NMC Silicon % ({year})", SILICON_PCTS, key=f"uksil{year}") if "NMC" in uk_cell else None
+    with st.expander(f"Year {year} Inputs"):
+        uk_lines = st.number_input(f"UK Lines ({year})", 0, 10, 0)
+        uk_power = st.slider(f"UK % Power ({year})", 0, 100, 0)
+        st.markdown("**UK Cell Mix (%)** (must sum to 100%)")
+        uk_mix_nmc1 = st.number_input(f"NMC Cell 1 (%) - UK {year}", 0, 100, 0)
+        uk_mix_nmc2 = st.number_input(f"NMC Cell 2 (%) - UK {year}", 0, 100, 0)
+        uk_mix_lfp = st.number_input(f"LFP (%) - UK {year}", 0, 100, 0)
+        if uk_mix_nmc1 + uk_mix_nmc2 + uk_mix_lfp != 100:
+            st.error(f"UK mix for {year} must sum to 100%.")
+            continue
+        uk_silicon = {}
+        if uk_mix_nmc1 > 0:
+            uk_silicon["NMC Cell 1"] = st.selectbox(f"UK NMC Cell 1 Silicon % ({year})", SILICON_PCTS, key=f"uks1{year}")
+        if uk_mix_nmc2 > 0:
+            uk_silicon["NMC Cell 2"] = st.selectbox(f"UK NMC Cell 2 Silicon % ({year})", SILICON_PCTS, key=f"uks2{year}")
 
-    in_lines = st.sidebar.number_input(f"India Lines ({year})", 0, 10, 0)
-    in_power_pct = st.sidebar.slider(f"India % Power ({year})", 0, 210, 0)
-    in_cell = st.sidebar.selectbox(f"India Cell Type ({year})", CELL_TYPES, key=f"incell{year}")
-    in_silicon_pct = st.sidebar.selectbox(f"India NMC Silicon % ({year})", SILICON_PCTS, key=f"insil{year}") if "NMC" in in_cell else None
+        in_lines = st.number_input(f"India Lines ({year})", 0, 10, 0)
+        in_power = st.slider(f"India % Power ({year})", 0, 210, 0)
+        st.markdown("**India Cell Mix (%)** (must sum to 100%)")
+        in_mix_nmc1 = st.number_input(f"NMC Cell 1 (%) - India {year}", 0, 100, 0)
+        in_mix_nmc2 = st.number_input(f"NMC Cell 2 (%) - India {year}", 0, 100, 0)
+        in_mix_lfp = st.number_input(f"LFP (%) - India {year}", 0, 100, 0)
+        if in_mix_nmc1 + in_mix_nmc2 + in_mix_lfp != 100:
+            st.error(f"India mix for {year} must sum to 100%.")
+            continue
+        in_silicon = {}
+        if in_mix_nmc1 > 0:
+            in_silicon["NMC Cell 1"] = st.selectbox(f"India NMC Cell 1 Silicon % ({year})", SILICON_PCTS, key=f"ins1{year}")
+        if in_mix_nmc2 > 0:
+            in_silicon["NMC Cell 2"] = st.selectbox(f"India NMC Cell 2 Silicon % ({year})", SILICON_PCTS, key=f"ins2{year}")
 
-    energy_mix = st.sidebar.selectbox(f"Energy Mix ({year})", list(ENERGY_MIXES.keys()), key=f"mix{year}")
+        energy_mix = st.selectbox(f"Energy Mix ({year})", list(ENERGY_MIXES.keys()), key=f"mix{year}")
 
-    results, materials = calculate_year(year, uk_lines, uk_power_pct, uk_cell, uk_silicon_pct,
-                                        in_lines, in_power_pct, in_cell, in_silicon_pct, energy_mix)
-    year_data.append(results)
-    for m, qty in materials.items():
-        material_totals_cumulative[m] = material_totals_cumulative.get(m, 0) + qty
+    uk_energy, uk_cells, uk_co2, uk_water, uk_materials = calc_site(
+        uk_lines, uk_power, {"NMC Cell 1": uk_mix_nmc1, "NMC Cell 2": uk_mix_nmc2, "LFP": uk_mix_lfp}, uk_silicon
+    )
+    in_energy, in_cells, in_co2, in_water, in_materials = calc_site(
+        in_lines, in_power, {"NMC Cell 1": in_mix_nmc1, "NMC Cell 2": in_mix_nmc2, "LFP": in_mix_lfp}, in_silicon
+    )
 
+    total_energy = uk_energy + in_energy
+    total_cells = uk_cells + in_cells
+    total_co2 = uk_co2 + in_co2
+    total_water = uk_water + in_water
+    total_cost = (uk_energy * 1e6 * UK_PRICE_PER_KWH) + (in_energy * 1e6 * INDIA_PRICE_PER_KWH)
+
+    # Merge material dicts
+    year_materials = {}
+    for m, v in {**uk_materials, **in_materials}.items():
+        year_materials[m] = uk_materials.get(m, 0) + in_materials.get(m, 0)
+
+    # Update cumulative materials
+    for m, v in year_materials.items():
+        cumulative_materials[m] = cumulative_materials.get(m, 0) + v
+
+    year_data.append({
+        "Year": year,
+        "Total Cells": total_cells,
+        "Total Energy (GWh)": total_energy,
+        "Total CO2 (tCO2)": total_co2,
+        "Total Water (m³)": total_water,
+        "Total Cost (£)": total_cost
+    })
+
+    mat_df = pd.DataFrame(year_materials.items(), columns=["Material", f"{year} Qty"])
+    annual_materials_list.append(mat_df)
+
+# -------------------------
+# OUTPUTS
+# -------------------------
 df = pd.DataFrame(year_data)
 
 st.subheader("Annual Results")
-st.dataframe(df)
+st.dataframe(df.style.format({
+    "Total Cells": "{:,.0f}",
+    "Total Energy (GWh)": "{:,.2f}",
+    "Total CO2 (tCO2)": "{:,.0f}",
+    "Total Water (m³)": "{:,.0f}",
+    "Total Cost (£)": "£{:,.2f}"
+}))
+
+st.subheader("Annual Material Usage")
+annual_materials_df = pd.concat(annual_materials_list, axis=1)
+st.dataframe(annual_materials_df)
 
 st.subheader("Cumulative Totals (2027–2035)")
-cum = df.sum(numeric_only=True)
-st.write(cum)
+cum = df.drop(columns=["Year"]).sum(numeric_only=True)
+cum_df = cum.to_frame(name="Total").T
+st.dataframe(cum_df.style.format({
+    "Total Cells": "{:,.0f}",
+    "Total Energy (GWh)": "{:,.2f}",
+    "Total CO2 (tCO2)": "{:,.0f}",
+    "Total Water (m³)": "{:,.0f}",
+    "Total Cost (£)": "£{:,.2f}"
+}))
 
 st.subheader("Cumulative Material Usage")
-materials_df = pd.DataFrame(material_totals_cumulative.items(), columns=["Material", "Total Qty"])
-st.dataframe(materials_df)
+cum_mat_df = pd.DataFrame(cumulative_materials.items(), columns=["Material", "Total Qty"])
+st.dataframe(cum_mat_df)
 
-st.subheader("Annual CO₂ Emissions (t)")
-st.bar_chart(df.set_index("Year")["Total CO2 (t)"])
+st.subheader("Annual CO₂ Emissions (tCO₂)")
+st.bar_chart(df.set_index("Year")["Total CO2 (tCO2)"])
 
-st.subheader("Cumulative CO₂ Emissions (t)")
-df["Cumulative CO2 (t)"] = df["Total CO2 (t)"].cumsum()
-st.line_chart(df.set_index("Year")["Cumulative CO2 (t)"])
+st.subheader("Cumulative CO₂ Emissions (tCO₂)")
+df["Cumulative CO2 (tCO2)"] = df["Total CO2 (tCO2)"].cumsum()
+st.line_chart(df.set_index("Year")["Cumulative CO2 (tCO2)"])
