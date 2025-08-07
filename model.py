@@ -299,7 +299,7 @@ for i, year in enumerate(YEARS):
         with col2:
             st.markdown("### 🇮🇳 India Operations")
             india_lines = st.number_input(f"Number of Lines", min_value=0, max_value=10, value=0, key=f"india_lines_{year}")
-            india_power = st.slider(f"Power Utilization (%)", min_value=0, max_value=210, value=0, key=f"india_power_{year}")
+            india_power = st.slider(f"Power Utilization (%)", min_value=0, max_value=100, value=0, key=f"india_power_{year}")
             
             st.markdown("**Cell Production Mix (%)**")
             india_mix_nmc1 = st.number_input("NMC Cell 1 (%)", min_value=0, max_value=100, value=0, key=f"india_nmc1_{year}")
