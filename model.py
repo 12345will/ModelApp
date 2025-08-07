@@ -515,11 +515,10 @@ if year_data:
             {"Material": material, "Total Quantity": qty, "Unit": material.split("(")[-1].replace(")", "") if "(" in material else ""}
             for material, qty in cumulative_materials.items()
         ])
-        # .sort_values("Total Quantity", ascending=False)
         
         # Show top 50 materials
         st.dataframe(
-            cum_materials_df.head(50),
+            cum_materials_df.head(100),
             use_container_width=True,
             column_config={
                 "Total Quantity": st.column_config.NumberColumn(format="%.2f")
