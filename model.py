@@ -31,40 +31,38 @@ materials_data = {
     "NMC Cell 1": {
         "materials": {
             "NCM": {"qty": 0.5, "unit": "kg"},
-            "SP-01": {"qty": 0.5, "unit": "kg"},
-            "PVDF-1": {"qty": 0.5, "unit": "kg"},
-            "NMP": {"qty": 0.5, "unit": "kg"},
+            "Carbon Black": {"qty": 0.5, "unit": "kg"},
+            "PVDF": {"qty": 1.0, "unit": "kg"},  # PVDF-1 + PVDF-2
+            "NMP Solvent": {"qty": 0.5, "unit": "kg"},
             "Boehmite": {"qty": 0.5, "unit": "kg"},
-            "PVDF-2": {"qty": 0.5, "unit": "kg"},
             "Graphite": {"qty": 0.5, "unit": "kg"},
-            "SWCNT": {"qty": 0.5, "unit": "kg"},
+            "Carbon Nanotube (SWCNT)": {"qty": 0.5, "unit": "kg"},
+            "Carbon Nanotube (MWCNT)": {"qty": 0.5, "unit": "kg"},
             "PAA": {"qty": 0.5, "unit": "kg"},
-            "Anoder Binder": {"qty": 0.5, "unit": "kg"},
-            "Thickener (CMC)": {"qty": 0.5, "unit": "kg"},
-            "Al Foil (Cell 1)": {"qty": 0.5, "unit": "kg"},
-            "Cu Foil (Cell 1)": {"qty": 0.5, "unit": "kg"},
-            "LT Electrolyte": {"qty": 0.5, "unit": "kg"},
+            "SBR Binder": {"qty": 0.5, "unit": "kg"},
+            "CMC Binder": {"qty": 0.5, "unit": "kg"},
+            "Aluminium Foil": {"qty": 0.5, "unit": "kg"},
+            "Copper Foil": {"qty": 0.5, "unit": "kg"},
+            "Electrolyte": {"qty": 0.5, "unit": "kg"},
             "Separator": {"qty": 3.5, "unit": "m2"},
             "Tape": {"qty": 1.0, "unit": "m2"},
-            "Aluminium Can (Cell 1)": {"qty": 1.0, "unit": "Units"},
-            "Positive Top-cap (Cell 1)": {"qty": 1.0, "unit": "Units"},
-            "Negative Top-cap (Cell 1)": {"qty": 1.0, "unit": "Units"},
-            "Blue Film (Cell 1)": {"qty": 1.0, "unit": "m2"},
-            "Positive Vent Cover (Cell 1)": {"qty": 1.0, "unit": "Units"},
-            "Negative Vent Cover (Cell 1)": {"qty": 1.0, "unit": "Units"},
+            "Cell Can": {"qty": 1.0, "unit": "Units"},
+            "Positive Top-cap": {"qty": 1.0, "unit": "Units"},
+            "Negative Top-cap": {"qty": 1.0, "unit": "Units"},
+            "Blue Film": {"qty": 1.0, "unit": "m2"},
+            "Positive Vent Cover": {"qty": 1.0, "unit": "Units"},
+            "Negative Vent Cover": {"qty": 1.0, "unit": "Units"},
             "Rubber Nail": {"qty": 1.0, "unit": "Units"},
             "Al Nail (Seal Pin)": {"qty": 1.0, "unit": "Units"},
-            "Insulation Bracket (Cell 1)": {"qty": 1.0, "unit": "Units"},
-            "Mylar Stack Wrap (Cell 1)": {"qty": 1.0, "unit": "Units"},
-            "Mylar Reinforcing Strip (Cell 1)": {"qty": 1.0, "unit": "Units"},
-            "MWCNT": {"qty": 0.5, "unit": "kg"},
+            "Insulation Bracket": {"qty": 1.0, "unit": "Units"},
+            "Mylar Stack Wrap": {"qty": 1.0, "unit": "Units"},
+            "Mylar Reinforcing Strip": {"qty": 1.0, "unit": "Units"},
             "Plasticiser": {"qty": 0.5, "unit": "kg"},
             "Mylar Tape": {"qty": 0.5, "unit": "m2"},
             "Welding Printing Adhesive": {"qty": 0.5, "unit": "m2"},
             "QR Code Tape": {"qty": 0.5, "unit": "m2"},
             "Battery Core Forming Nail": {"qty": 2.0, "unit": "Units"}
         },
-        # CO2 and water per kWh based on silicon percentage
         "co2_water_per_kwh": {
             3: {"co2": 2, "water": 5},
             5: {"co2": 3, "water": 6},
@@ -72,38 +70,38 @@ materials_data = {
             15: {"co2": 5, "water": 8},
             20: {"co2": 6, "water": 9}
         },
-        "base_co2_water_per_kwh": {"co2": 2, "water": 5}  # Base values
+        "base_co2_water_per_kwh": {"co2": 2, "water": 5}
     },
+
     "NMC Cell 2": {
         "materials": {
-            "NCM - CAM powder": {"qty": 0.2, "unit": "kg"},
-            "SP-01 - carbon black cam": {"qty": 0.2, "unit": "kg"},
-            "PVDF-1 Cathode": {"qty": 0.2, "unit": "kg"},
-            "NMP - solvent": {"qty": 0.2, "unit": "kg"},
+            "NCM": {"qty": 0.2, "unit": "kg"},  # Unified from NCM - CAM powder
+            "Carbon Black": {"qty": 0.2, "unit": "kg"},
+            "PVDF": {"qty": 0.4, "unit": "kg"},  # PVDF-1 Cathode + PVDF-2
+            "NMP Solvent": {"qty": 0.2, "unit": "kg"},
             "Boehmite": {"qty": 0.2, "unit": "kg"},
-            "PVDF-2": {"qty": 0.2, "unit": "kg"},
-            "Graphite - 100% synthetic": {"qty": 0.2, "unit": "kg"},
-            "SWCNT Single wall Carbon Nano tube": {"qty": 0.2, "unit": "kg"},
-            "MWCNT Multiwall carbon nano tube": {"qty": 0.2, "unit": "kg"},
-            "PAA - anode binder": {"qty": 0.2, "unit": "kg"},
-            "Anoder Binder - SBR": {"qty": 0.2, "unit": "kg"},
-            "Thickener (CMC)": {"qty": 0.2, "unit": "kg"},
-            "Al Foil (Cell 2)": {"qty": 0.2, "unit": "kg"},
-            "Cu Foil (Cell 2)": {"qty": 0.2, "unit": "kg"},
-            "LT Electrolyte": {"qty": 0.2, "unit": "kg"},
+            "Graphite": {"qty": 0.2, "unit": "kg"},
+            "Carbon Nanotube (SWCNT)": {"qty": 0.2, "unit": "kg"},
+            "Carbon Nanotube (MWCNT)": {"qty": 0.2, "unit": "kg"},
+            "PAA": {"qty": 0.2, "unit": "kg"},
+            "SBR Binder": {"qty": 0.2, "unit": "kg"},
+            "CMC Binder": {"qty": 0.2, "unit": "kg"},
+            "Aluminium Foil": {"qty": 0.2, "unit": "kg"},
+            "Copper Foil": {"qty": 0.2, "unit": "kg"},
+            "Electrolyte": {"qty": 0.2, "unit": "kg"},
             "Separator": {"qty": 5.2, "unit": "m2"},
             "Tape": {"qty": 0.4, "unit": "m2"},
-            "Aluminium Can (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Positive Top-cap (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Negative Top-cap (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Blue Film (Cell 2)": {"qty": 0.2, "unit": "m2"},
-            "Positive Vent Cover (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Negative Vent Cover (Cell 2)": {"qty": 1.0, "unit": "Units"},
+            "Cell Can": {"qty": 1.0, "unit": "Units"},
+            "Positive Top-cap": {"qty": 1.0, "unit": "Units"},
+            "Negative Top-cap": {"qty": 1.0, "unit": "Units"},
+            "Blue Film": {"qty": 0.2, "unit": "m2"},
+            "Positive Vent Cover": {"qty": 1.0, "unit": "Units"},
+            "Negative Vent Cover": {"qty": 1.0, "unit": "Units"},
             "Rubber Nail": {"qty": 1.0, "unit": "Units"},
             "Al Nail (Seal Pin)": {"qty": 1.0, "unit": "Units"},
-            "Insulation Bracket (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Mylar Stack Wrap (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Mylar Reinforcing Strip (Cell 2)": {"qty": 1.0, "unit": "Units"},
+            "Insulation Bracket": {"qty": 1.0, "unit": "Units"},
+            "Mylar Stack Wrap": {"qty": 1.0, "unit": "Units"},
+            "Mylar Reinforcing Strip": {"qty": 1.0, "unit": "Units"},
             "Mylar Tape": {"qty": 0.2, "unit": "m2"},
             "Welding Printing Adhesive": {"qty": 0.2, "unit": "m2"},
             "QR Code Tape": {"qty": 0.2, "unit": "m2"},
@@ -119,30 +117,26 @@ materials_data = {
         },
         "base_co2_water_per_kwh": {"co2": 1, "water": 2}
     },
+
     "LFP": {
         "materials": {
             "Polypropylene": {"qty": 0.3, "unit": "kg"},
-            "Aluminium Foil - Cathode": {"qty": 0.3, "unit": "kg"},
-            "NMP Solvent - Cathode": {"qty": 0.3, "unit": "kg"},
-            "SBR Binder - Cathode": {"qty": 0.3, "unit": "kg"},
+            "Aluminium Foil": {"qty": 0.3, "unit": "kg"},  # Unified from -Cathode
+            "NMP Solvent": {"qty": 0.3, "unit": "kg"},
+            "SBR Binder": {"qty": 0.6, "unit": "kg"},  # Cathode + Anode
             "Polyethylene Terephthalate": {"qty": 0.3, "unit": "kg"},
-            "Anode Syn Graphite AAM": {"qty": 0.3, "unit": "kg"},
-            "PVDF Binder - Anode": {"qty": 0.3, "unit": "kg"},
+            "Graphite": {"qty": 0.3, "unit": "kg"},
+            "PVDF": {"qty": 0.6, "unit": "kg"},  # Binder - Anode + -Cathode
             "Cathode Active Material CAM + pCAM": {"qty": 0.3, "unit": "kg"},
             "Li": {"qty": 0.3, "unit": "kg"},
-            "Can": {"qty": 0.3, "unit": "kg"},
-            "NMP Solvent - Anode": {"qty": 0.3, "unit": "kg"},
-            "CMC Binder - Anode": {"qty": 0.3, "unit": "kg"},
-            "Carbon Black - Anode": {"qty": 0.3, "unit": "kg"},
-            "SBR Binder - Anode": {"qty": 0.3, "unit": "kg"},
-            "PVDF Binder - Cathode": {"qty": 0.3, "unit": "kg"},
+            "Cell Can": {"qty": 0.3, "unit": "kg"},
+            "CMC Binder": {"qty": 0.6, "unit": "kg"},  # Anode + Cathode
+            "Carbon Black": {"qty": 0.6, "unit": "kg"},  # Anode + Cathode
             "Electrolyte": {"qty": 0.3, "unit": "kg"},
-            "Copper Foil - Anode": {"qty": 0.3, "unit": "kg"},
-            "Polyethylene - Separator": {"qty": 0.3, "unit": "kg"},
-            "CMC Binder - Cathode": {"qty": 0.3, "unit": "kg"},
-            "Carbon Black - Cathode": {"qty": 0.3, "unit": "kg"}
+            "Copper Foil": {"qty": 0.3, "unit": "kg"},
+            "Separator": {"qty": 0.3, "unit": "kg"}
         },
-        "co2_water_per_kwh": {"co2": 8, "water": 9}  # LFP doesn't have silicon variations
+        "co2_water_per_kwh": {"co2": 8, "water": 9}
     }
 }
 
