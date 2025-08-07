@@ -482,47 +482,7 @@ if year_data:
     fig_co2.update_layout(height=800, showlegend=True, title_text="Carbon Emissions & Energy Analysis")
     st.plotly_chart(fig_co2, use_container_width=True)
     
-    # Material usage
-    if annual_materials_list:
-        st.subheader("🔧 Material Usage Analysis")
-        
-        # Combine all material data
-        materials_combined = pd.concat(annual_materials_list, axis=1).fillna(0)
-        
-        # Show top 10 materials by total usage
-        if not materials_combined.empty:
-            # Calculate total usage for each material
-            materials_combined['Total'] = materials_combined.select_dtypes(include=[np.number]).sum(axis=1)
-            top_materials = materials_combined.nlargest(10, 'Total')
-            
-            st.write("**Top 10 Materials by Total Usage (2027-2035)**")
-            st.dataframe(
-                top_materials,
-                use_container_width=True,
-                column_config={col: st.column_config.NumberColumn(format="%.2f") for col in top_materials.columns if col != 'Material'}
-            )
-            
-            # Material usage chart
-            fig_materials = go.Figure()
-            for year in YEARS:
-                col_name = f"Qty_{year}"
-                if col_name in top_materials.columns:
-                    fig_materials.add_trace(
-                        go.Bar(
-                            name=str(year),
-                            x=top_materials.index,
-                            y=top_materials[col_name]
-                        )
-                    )
-            
-            fig_materials.update_layout(
-                title="Top 10 Materials Usage by Year",
-                xaxis_title="Materials",
-                yaxis_title="Quantity",
-                barmode='stack',
-                height=500
-            )
-            st.plotly_chart(fig_materials, use_container_width=True)
+   
     
     # Cumulative totals
     st.subheader("📊 Cumulative Totals (2027–2035)")
