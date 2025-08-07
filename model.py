@@ -70,9 +70,8 @@ materials_data = {
 # -------------------------
 # CALCULATIONS
 # -------------------------
-def calc_site(lines, power_pct, mix, silicon_pcts):
-    energy_gwh = lines * 50 * (power_pct / 100)
-    total_cells = lines * 300 * (power_pct / 100)
+
+def calc_site_from_energy(energy_gwh, total_cells, mix, silicon_pcts):
     site_materials = {}
     total_co2 = 0
     total_water = 0
@@ -139,11 +138,13 @@ for year in YEARS:
     uk_energy = uk_cells = uk_co2 = uk_water = 0
     uk_materials = {}
     if uk_valid:
-        uk_energy, uk_cells, uk_co2, uk_water, uk_materials = calc_site(
-            uk_lines, uk_power,
-            {"NMC Cell 1": uk_mix_nmc1, "NMC Cell 2": uk_mix_nmc2, "LFP": uk_mix_lfp},
-            uk_silicon
-        )
+        uk_cells = uk_lines * 300 * (uk_energy / (uk_lines * 50)) if uk_lines else 0
+    uk_energy, uk_cells, uk_co2, uk_water, uk_materials = calc_site_from_energy(
+        uk_energy, uk_cells,
+        {"NMC Cell 1": uk_mix_nmc1, "NMC Cell 2": uk_mix_nmc2, "LFP": uk_mix_lfp},
+        uk_silicon
+    )
+
     else:
         if uk_lines > 0:
             st.warning(f"UK mix for {year} does not sum to 100%. Skipping UK calculations.")
