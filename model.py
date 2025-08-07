@@ -103,7 +103,8 @@ for year in YEARS:
     with st.expander(f"Year {year} Inputs"):
         # UK Inputs
         uk_lines = st.number_input(f"UK Lines ({year})", 0, 10, 0)
-        uk_power = st.slider(f"UK % Power ({year})", 0, 100, 0)
+        uk_max_gwh = uk_lines * 50
+        uk_energy = st.number_input(f"UK Energy Used (GWh) - max {uk_max_gwh}", 0.0, uk_max_gwh, 0.0)
         st.markdown("**UK Cell Mix (%)** (must sum to 100%)")
         uk_mix_nmc1 = st.number_input(f"NMC Cell 1 (%) - UK {year}", 0, 100, 0)
         uk_mix_nmc2 = st.number_input(f"NMC Cell 2 (%) - UK {year}", 0, 100, 0)
@@ -131,7 +132,9 @@ for year in YEARS:
         if in_mix_nmc2 > 0:
             in_silicon["NMC Cell 2"] = st.selectbox(f"India NMC Cell 2 Silicon % ({year})", SILICON_PCTS, key=f"ins2{year}")
 
-        energy_mix = st.selectbox(f"Energy Mix ({year})", list(ENERGY_MIXES.keys()), key=f"mix{year}")
+        uk_energy_mix = st.selectbox(f"UK Energy Mix ({year})", list(ENERGY_MIXES.keys()), key=f"ukmix{year}")
+        in_energy_mix = st.selectbox(f"India Energy Mix ({year})", list(ENERGY_MIXES.keys()), key=f"inmix{year}")
+
 
     uk_energy = uk_cells = uk_co2 = uk_water = 0
     uk_materials = {}
