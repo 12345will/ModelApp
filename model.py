@@ -510,7 +510,7 @@ if year_data:
             for material, qty in cumulative_materials.items()
         ])
         
-        # Show top 50 materials
+        # Show all materials with cumulative values
         st.dataframe(
             cum_materials_df.head(100),
             use_container_width=True,
