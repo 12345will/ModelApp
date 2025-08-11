@@ -1,98 +1,4 @@
-# -------------------------
-# Material sourcing configuration (only for NMC cells) — REPLACE THIS WHOLE SECTION
-# -------------------------
-uk_material_sourcing = {}
-india_material_sourcing = {}
-
-def render_material_sourcing(country_prefix, year, mix_nmc1, mix_nmc2, label_prefix):
-    material_sourcing = {}
-    if mix_nmc1 > 0 or mix_nmc2 > 0:
-        with st.expander(f"🔬 {label_prefix} Material Sourcing Configuration ({year})", expanded=False):
-            # Toggle between unique selection (single source) and % mix (multiple)
-            sourcing_mode = st.radio(
-                "Selection mode",
-                options=["Unique source per category", "Percent mix across sources"],
-                index=0,
-                key=f"{country_prefix}_sourcing_mode_{year}",
-                horizontal=True,
-                help="Pick one source per category, or distribute percentages that sum to 100%."
-            )
-
-            def render_for_cell(cell_key, cell_title):
-                st.markdown(f"**{cell_title} Material Sources**")
-                material_sourcing[cell_key] = {}
-
-                for material_category, sources in MATERIAL_SOURCES.items():
-                    st.markdown(f"*{material_category}*")
-                    material_sourcing[cell_key][material_category] = {}
-
-                    if sourcing_mode == "Unique source per category":
-                        # Single select — assigns 100% to the chosen one, 0% to others
-                        selected = st.selectbox(
-                            "Select source",
-                            options=list(sources.keys()),
-                            key=f"{country_prefix}_{cell_key}_{material_category}_{year}_unique",
-                        )
-                        for src in sources.keys():
-                            material_sourcing[cell_key][material_category][src] = 100 if src == selected else 0
-                        st.success("✅ Using a single source (100%) for this category")
-                    else:
-                        # Percent mode — show inputs for each source, require sum = 100 or 0
-                        source_cols = st.columns(min(3, len(sources)))
-                        col_idx = 0
-                        total_pct = 0
-                        for source_name, source_data in sources.items():
-                            with source_cols[col_idx % len(source_cols)]:
-                                pct = st.number_input(
-                                    f"{source_name[:50]}..." if len(source_name) > 50 else source_name,
-                                    min_value=0, max_value=100, value=0,
-                                    key=f"{country_prefix}_{cell_key}_{material_category}_{source_name}_{year}",
-                                    help=f"CO₂: +{source_data['co2']} kg/kWh, Water: +{source_data['water']} m³/kWh"
-                                )
-                                material_sourcing[cell_key][material_category][source_name] = pct
-                                total_pct += pct
-                            col_idx += 1
-
-                        if total_pct > 0 and total_pct != 100:
-                            st.warning(f"{material_category} percentages sum to {total_pct}% (should be 100% or 0%)")
-                        elif total_pct == 100:
-                            st.success(f"✅ {material_category} sourcing configured")
-
-            if mix_nmc1 > 0:
-                render_for_cell("NMC Cell 1", "NMC Cell 1")
-            if mix_nmc2 > 0:
-                render_for_cell("NMC Cell 2", "NMC Cell 2")
-
-    return material_sourcing
-
-# Call the renderer right after you collect the UK/India mixes for each year (inside the year tab)
-# Example usage in your loop (keep near where you already compute uk_mix_nmc1, etc.):
-
-# UK
-if uk_lines > 0 and (uk_mix_nmc1 > 0 or uk_mix_nmc2 > 0):
-    uk_material_sourcing = render_material_sourcing(
-        country_prefix="uk",
-        year=year,
-        mix_nmc1=uk_mix_nmc1,
-        mix_nmc2=uk_mix_nmc2,
-        label_prefix="UK"
-    )
-else:
-    uk_material_sourcing = {}
-
-# India
-if india_lines > 0 and (india_mix_nmc1 > 0 or india_mix_nmc2 > 0):
-    india_material_sourcing = render_material_sourcing(
-        country_prefix="india",
-        year=year,
-        mix_nmc1=india_mix_nmc1,
-        mix_nmc2=india_mix_nmc2,
-        label_prefix="India"
-    )
-else:
-    india_material_sourcing = {}
-
-
+import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -259,7 +165,7 @@ materials_data = {
             "Terminal Tape": {"qty": 0.2, "unit": "m2"},
             "PET Film": {"qty": 0.2, "unit": "m2"}
         },
-        "base_co2_water_per_kwh": {"co2": 68.85, "water": 24.14},
+        "base_co2_water_per_kwh": {"co2": 54.16, "water": 21.11},
         "silicon_co2_water_per_kwh": {
             3: {"co2": 2, "water": 3},
             5: {"co2": 3, "water": 4},
@@ -295,69 +201,96 @@ materials_data = {
     }
 }
 
+# -------------------------
+# MATERIAL SOURCING UI (helper)
+# -------------------------
+def render_material_sourcing(country_prefix, year, mix_nmc1, mix_nmc2, label_prefix):
+    """
+    Renders the material sourcing UI for NMC cells.
+    Returns:
+      {
+        "NMC Cell 1": { "<category>": { "<source>": pct, ... }, ... },
+        "NMC Cell 2": { "<category>": { "<source>": pct, ... }, ... }
+      }
+    """
+    material_sourcing = {}
+    if mix_nmc1 > 0 or mix_nmc2 > 0:
+        with st.expander(f"🔬 {label_prefix} Material Sourcing Configuration ({year})", expanded=False):
+            mode = st.radio(
+                "Selection mode",
+                ["Unique source per category", "Percent mix across sources"],
+                index=0,
+                key=f"{country_prefix}_sourcing_mode_{year}",
+                horizontal=True,
+                help="Pick one source (100%) or distribute percentages that sum to 100%."
+            )
+
+            def render_for_cell(cell_key, cell_title):
+                st.markdown(f"**{cell_title} Material Sources**")
+                material_sourcing[cell_key] = {}
+                for material_category, sources in MATERIAL_SOURCES.items():
+                    st.markdown(f"*{material_category}*")
+                    material_sourcing[cell_key][material_category] = {}
+                    if mode == "Unique source per category":
+                        chosen = st.selectbox(
+                            "Select source",
+                            options=list(sources.keys()),
+                            key=f"{country_prefix}_{cell_key}_{material_category}_{year}_unique",
+                        )
+                        for s in sources.keys():
+                            material_sourcing[cell_key][material_category][s] = 100 if s == chosen else 0
+                        st.success("✅ Using a single source (100%) for this category")
+                    else:
+                        cols = st.columns(min(3, len(sources)))
+                        total = 0
+                        for idx, (sname, sdata) in enumerate(sources.items()):
+                            with cols[idx % len(cols)]:
+                                pct = st.number_input(
+                                    sname if len(sname) <= 50 else f"{sname[:50]}...",
+                                    min_value=0, max_value=100, value=0,
+                                    key=f"{country_prefix}_{cell_key}_{material_category}_{sname}_{year}",
+                                    help=f"CO₂: +{sdata['co2']} kg/kWh, Water: +{sdata['water']} m³/kWh"
+                                )
+                            material_sourcing[cell_key][material_category][sname] = pct
+                            total += pct
+                        if total > 0 and total != 100:
+                            st.warning(f"{material_category} percentages sum to {total}% (should be 100% or 0%)")
+                        elif total == 100:
+                            st.success(f"✅ {material_category} sourcing configured")
+
+            if mix_nmc1 > 0:
+                render_for_cell("NMC Cell 1", "NMC Cell 1")
+            if mix_nmc2 > 0:
+                render_for_cell("NMC Cell 2", "NMC Cell 2")
+
+    return material_sourcing
 
 # -------------------------
 # HELPER FUNCTIONS
 # -------------------------
-def calculate_material_sourcing_impact(cell_type, material_sourcing_mix):
-    """Calculate the additional CO2 and water impact from material sourcing choices"""
-    total_co2_addition = 0
-    total_water_addition = 0
-    
-    for material_category, sources in material_sourcing_mix.items():
-        if material_category not in MATERIAL_SOURCES:
-            continue
-            
-        category_co2 = 0
-        category_water = 0
-        total_percentage = 0
-        
-        for source_name, percentage in sources.items():
-            if percentage > 0 and source_name in MATERIAL_SOURCES[material_category]:
-                source_data = MATERIAL_SOURCES[material_category][source_name]
-                category_co2 += source_data["co2"] * (percentage / 100)
-                category_water += source_data["water"] * (percentage / 100)
-                total_percentage += percentage
-        
-        # Only add if the percentages sum to 100% for this category
-        if total_percentage == 100:
-            total_co2_addition += category_co2
-            total_water_addition += category_water
-    
-    return total_co2_addition, total_water_addition
-
 def calculate_material_sourcing_impact(material_sourcing_mix):
     """Calculate the additional CO2 and water impact from material sourcing choices"""
     total_co2_addition = 0
     total_water_addition = 0
-
     for material_category, sources in material_sourcing_mix.items():
         if material_category not in MATERIAL_SOURCES:
             continue
-
         category_co2 = 0
         category_water = 0
         total_percentage = 0
-
         for source_name, percentage in sources.items():
             if percentage > 0 and source_name in MATERIAL_SOURCES[material_category]:
                 source_data = MATERIAL_SOURCES[material_category][source_name]
                 category_co2 += source_data["co2"] * (percentage / 100)
                 category_water += source_data["water"] * (percentage / 100)
                 total_percentage += percentage
-
-        # Only add if the percentages sum to 100% for this category
         if total_percentage == 100:
             total_co2_addition += category_co2
             total_water_addition += category_water
-
     return total_co2_addition, total_water_addition
-
 
 def calculate_site_metrics(lines, power_pct, cell_mix, silicon_pcts, material_sourcing, country, energy_mix_name):
     """Calculate energy, cells, emissions, and materials for a site"""
-
-    # Capacity
     if country == "UK":
         max_gwh_per_line = 50
         max_cells_per_line = 300
@@ -397,8 +330,6 @@ def calculate_site_metrics(lines, power_pct, cell_mix, silicon_pcts, material_so
             silicon_pct = silicon_pcts.get(cell_type, 3)
             co2_per_kwh += cell_data["silicon_co2_water_per_kwh"][silicon_pct]["co2"]
             water_per_kwh += cell_data["silicon_co2_water_per_kwh"][silicon_pct]["water"]
-
-            # Material sourcing increments (only if provided for this cell)
             if cell_type in material_sourcing:
                 sourcing_co2, sourcing_water = calculate_material_sourcing_impact(material_sourcing[cell_type])
                 co2_per_kwh += sourcing_co2
@@ -422,27 +353,20 @@ def calculate_site_metrics(lines, power_pct, cell_mix, silicon_pcts, material_so
     }
 
 def calculate_costs(uk_energy_gwh, india_energy_gwh):
-    """Calculate energy costs"""
-    uk_cost = uk_energy_gwh * 1e6 * UK_PRICE_PER_KWH  # Convert GWh to kWh
+    uk_cost = uk_energy_gwh * 1e6 * UK_PRICE_PER_KWH
     india_cost = india_energy_gwh * 1e6 * INDIA_PRICE_PER_KWH
     return uk_cost + india_cost
 
 # -------------------------
 # STREAMLIT APP
 # -------------------------
-st.set_page_config(
-    page_title="Agrata Carbon Sensitivity Model",
-    page_icon="🔋",
-    layout="wide"
-)
-
+st.set_page_config(page_title="Agrata Carbon Sensitivity Model", page_icon="🔋", layout="wide")
 st.title("🔋 Agrata Corporate Carbon Sensitivity Model (2027–2035)")
 st.markdown("**Comprehensive CO₂ emissions and material analysis for battery manufacturing operations**")
 
 # Initialize session state for data storage
 if 'year_data' not in st.session_state:
     st.session_state.year_data = []
-
 if 'cumulative_materials' not in st.session_state:
     st.session_state.cumulative_materials = {}
 
@@ -458,91 +382,75 @@ st.sidebar.write("Both: 300 cells per line (max)")
 
 # Main input section
 st.header("📊 Annual Production Planning")
-
 year_data = []
 annual_materials_list = []
 cumulative_materials = {}
 
-# Create tabs for each year
-year_tabs = st.tabs([str(year) for year in YEARS])
-
-# Create tabs for each year
+# Create tabs for each year (once)
 year_tabs = st.tabs([str(year) for year in YEARS])
 
 for i, year in enumerate(YEARS):
     with year_tabs[i]:
         st.subheader(f"Year {year} Configuration")
-        
-        # Create two columns for UK and India
+
+        # Columns for UK and India
         col1, col2 = st.columns(2)
-        
+
         with col1:
             st.markdown("### 🇬🇧 UK Operations")
-            uk_lines = st.number_input(f"Number of Lines", min_value=0, max_value=10, value=0, key=f"uk_lines_{year}")
-            uk_power = st.slider(f"Power Utilization (%)", min_value=0, max_value=100, value=0, key=f"uk_power_{year}")
-            
+            uk_lines = st.number_input("Number of Lines", min_value=0, max_value=10, value=0, key=f"uk_lines_{year}")
+            uk_power = st.slider("Power Utilization (%)", min_value=0, max_value=100, value=0, key=f"uk_power_{year}")
+
             st.markdown("**Cell Production Mix (%)**")
             uk_mix_nmc1 = st.number_input("NMC Cell 1 (%)", min_value=0, max_value=100, value=0, key=f"uk_nmc1_{year}")
             uk_mix_nmc2 = st.number_input("NMC Cell 2 (%)", min_value=0, max_value=100, value=0, key=f"uk_nmc2_{year}")
-            uk_mix_lfp = st.number_input("LFP (%)", min_value=0, max_value=100, value=0, key=f"uk_lfp_{year}")
-            
+            uk_mix_lfp  = st.number_input("LFP (%)",         min_value=0, max_value=100, value=0, key=f"uk_lfp_{year}")
+
             uk_total_mix = uk_mix_nmc1 + uk_mix_nmc2 + uk_mix_lfp
             if uk_lines > 0 and uk_total_mix != 100:
                 st.error(f"Cell mix must sum to 100% (currently {uk_total_mix}%)")
             elif uk_lines > 0:
-                st.success(f"✅ Cell mix sums to 100%")
-            
+                st.success("✅ Cell mix sums to 100%")
+
             uk_silicon = {}
             if uk_mix_nmc1 > 0:
                 uk_silicon["NMC Cell 1"] = st.selectbox("NMC Cell 1 Silicon %", SILICON_PCTS, key=f"uk_si1_{year}")
             if uk_mix_nmc2 > 0:
                 uk_silicon["NMC Cell 2"] = st.selectbox("NMC Cell 2 Silicon %", SILICON_PCTS, key=f"uk_si2_{year}")
-        
+
         with col2:
             st.markdown("### 🇮🇳 India Operations")
-            india_lines = st.number_input(f"Number of Lines", min_value=0, max_value=10, value=0, key=f"india_lines_{year}")
-            india_power = st.slider(f"Power Utilization (%)", min_value=0, max_value=210, value=0, key=f"india_power_{year}")
-            
+            india_lines = st.number_input("Number of Lines", min_value=0, max_value=10, value=0, key=f"india_lines_{year}")
+            india_power = st.slider("Power Utilization (%)", min_value=0, max_value=210, value=0, key=f"india_power_{year}")
+
             st.markdown("**Cell Production Mix (%)**")
             india_mix_nmc1 = st.number_input("NMC Cell 1 (%)", min_value=0, max_value=100, value=0, key=f"india_nmc1_{year}")
             india_mix_nmc2 = st.number_input("NMC Cell 2 (%)", min_value=0, max_value=100, value=0, key=f"india_nmc2_{year}")
-            india_mix_lfp = st.number_input("LFP (%)", min_value=0, max_value=100, value=0, key=f"india_lfp_{year}")
-            
+            india_mix_lfp  = st.number_input("LFP (%)",         min_value=0, max_value=100, value=0, key=f"india_lfp_{year}")
+
             india_total_mix = india_mix_nmc1 + india_mix_nmc2 + india_mix_lfp
             if india_lines > 0 and india_total_mix != 100:
                 st.error(f"Cell mix must sum to 100% (currently {india_total_mix}%)")
             elif india_lines > 0:
-                st.success(f"✅ Cell mix sums to 100%")
-            
+                st.success("✅ Cell mix sums to 100%")
+
             india_silicon = {}
             if india_mix_nmc1 > 0:
                 india_silicon["NMC Cell 1"] = st.selectbox("NMC Cell 1 Silicon %", SILICON_PCTS, key=f"india_si1_{year}")
             if india_mix_nmc2 > 0:
                 india_silicon["NMC Cell 2"] = st.selectbox("NMC Cell 2 Silicon %", SILICON_PCTS, key=f"india_si2_{year}")
-        
-        # Energy mix selection (applies to both countries)
+
+        # Energy mix
         energy_mix = st.selectbox("Energy Mix", list(ENERGY_MIXES.keys()), key=f"energy_mix_{year}")
-        
-        # --- NEW: Build sourcing UI here, after inputs are defined ---
+
+        # --- Build sourcing UI here, after inputs are defined ---
         if uk_lines > 0 and (uk_mix_nmc1 > 0 or uk_mix_nmc2 > 0):
-            uk_material_sourcing = render_material_sourcing(
-                country_prefix="uk",
-                year=year,
-                mix_nmc1=uk_mix_nmc1,
-                mix_nmc2=uk_mix_nmc2,
-                label_prefix="UK"
-            )
+            uk_material_sourcing = render_material_sourcing("uk", year, uk_mix_nmc1, uk_mix_nmc2, "UK")
         else:
             uk_material_sourcing = {}
 
         if india_lines > 0 and (india_mix_nmc1 > 0 or india_mix_nmc2 > 0):
-            india_material_sourcing = render_material_sourcing(
-                country_prefix="india",
-                year=year,
-                mix_nmc1=india_mix_nmc1,
-                mix_nmc2=india_mix_nmc2,
-                label_prefix="India"
-            )
+            india_material_sourcing = render_material_sourcing("india", year, india_mix_nmc1, india_mix_nmc2, "India")
         else:
             india_material_sourcing = {}
         # --- end sourcing UI section ---
@@ -550,336 +458,68 @@ for i, year in enumerate(YEARS):
         # Calculate results for this year
         uk_results = {"energy_gwh": 0, "total_cells": 0, "total_co2": 0, "energy_co2": 0, "material_co2": 0, "total_water": 0, "materials": {}}
         india_results = {"energy_gwh": 0, "total_cells": 0, "total_co2": 0, "energy_co2": 0, "material_co2": 0, "total_water": 0, "materials": {}}
-        
+
         if uk_lines > 0 and uk_total_mix == 100:
             uk_mix = {"NMC Cell 1": uk_mix_nmc1, "NMC Cell 2": uk_mix_nmc2, "LFP": uk_mix_lfp}
             uk_results = calculate_site_metrics(uk_lines, uk_power, uk_mix, uk_silicon, uk_material_sourcing, "UK", energy_mix)
-        
+
         if india_lines > 0 and india_total_mix == 100:
             india_mix = {"NMC Cell 1": india_mix_nmc1, "NMC Cell 2": india_mix_nmc2, "LFP": india_mix_lfp}
             india_results = calculate_site_metrics(india_lines, india_power, india_mix, india_silicon, india_material_sourcing, "India", energy_mix)
-        
-        # (The rest of your existing summary/materials code continues here…)
 
-# -------------------------
-# RESULTS AND ANALYSIS
-# -------------------------
-if year_data:
-    df = pd.DataFrame(year_data)
-    
-    st.header("📊 Results & Analysis")
-    
-    # Summary metrics
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        total_cells_all = df["Total Cells"].sum()
-        st.metric("Total Cells (2027-2035)", f"{total_cells_all:,.0f}")
-    with col2:
-        total_energy_all = df["Total Energy (GWh)"].sum()
-        st.metric("Total Energy", f"{total_energy_all:.1f} GWh")
-    with col3:
-        total_co2_all = df["Total CO2 (tCO2)"].sum()
-        st.metric("Total CO₂ Emissions", f"{total_co2_all:,.0f} tCO₂")
-    with col4:
-        total_cost_all = df["Total Cost (£)"].sum()
-        st.metric("Total Cost", f"£{total_cost_all:,.0f}")
-    
-    # Annual results table
-    st.subheader("Annual Results Summary")
-    display_df = df.copy()
-    st.dataframe(
-        display_df,
-        use_container_width=True,
-        column_config={
-            "Total Cells": st.column_config.NumberColumn(format="%.0f"),
-            "Total Energy (GWh)": st.column_config.NumberColumn(format="%.2f"),
-            "Total CO2 (tCO2)": st.column_config.NumberColumn(format="%.0f"),
-            "Energy CO2 (tCO2)": st.column_config.NumberColumn(format="%.0f"),
-            "Material CO2 (tCO2)": st.column_config.NumberColumn(format="%.0f"),
-            "Total Water (m³)": st.column_config.NumberColumn(format="%.0f"),
-            "Total Cost (£)": st.column_config.NumberColumn(format="£%.0f"),
-            "UK Energy (GWh)": st.column_config.NumberColumn(format="%.2f"),
-            "India Energy (GWh)": st.column_config.NumberColumn(format="%.2f"),
-        }
-    )
-    
-    # Visualizations
-    st.subheader("📈 Visualizations")
-    
-    # CO2 emissions breakdown
-    fig_co2 = make_subplots(
-        rows=2, cols=2,
-        subplot_titles=("Annual CO₂ Emissions", "Cumulative CO₂ Emissions", 
-                       "CO₂ Breakdown by Source", "Energy Production by Country"),
-        specs=[[{"secondary_y": False}, {"secondary_y": False}],
-               [{"secondary_y": False}, {"secondary_y": False}]]
-    )
-    
-    # Annual CO2
-    fig_co2.add_trace(
-        go.Bar(x=df["Year"], y=df["Total CO2 (tCO2)"], name="Total CO₂"),
-        row=1, col=1
-    )
-    
-    # Cumulative CO2
-    df["Cumulative CO2"] = df["Total CO2 (tCO2)"].cumsum()
-    fig_co2.add_trace(
-        go.Scatter(x=df["Year"], y=df["Cumulative CO2"], mode='lines+markers', name="Cumulative CO₂"),
-        row=1, col=2
-    )
-    
-    # CO2 breakdown
-    fig_co2.add_trace(
-        go.Bar(x=df["Year"], y=df["Energy CO2 (tCO2)"], name="Energy CO₂"),
-        row=2, col=1
-    )
-    fig_co2.add_trace(
-        go.Bar(x=df["Year"], y=df["Material CO2 (tCO2)"], name="Material CO₂"),
-        row=2, col=1
-    )
-    
-    # Energy by country
-    fig_co2.add_trace(
-        go.Bar(x=df["Year"], y=df["UK Energy (GWh)"], name="UK Energy"),
-        row=2, col=2
-    )
-    fig_co2.add_trace(
-        go.Bar(x=df["Year"], y=df["India Energy (GWh)"], name="India Energy"),
-        row=2, col=2
-    )
-    
-    fig_co2.update_layout(height=800, showlegend=True, title_text="Carbon Emissions & Energy Analysis")
-    st.plotly_chart(fig_co2, use_container_width=True)
-    
-    # Material sourcing impact analysis
-    if any(year_data):
-        st.subheader("🔬 Material Sourcing Impact Analysis")
-        
-        # Create a summary of material sourcing choices
-        sourcing_summary = []
-        for year_info in year_data:
-            year = year_info["Year"]
-            # This would need to be stored during the calculation phase
-            # For now, we'll show a placeholder
-            sourcing_summary.append({
-                "Year": year,
-                "Note": "Material sourcing impact included in calculations"
-            })
-        
-        if sourcing_summary:
-            st.info("Material sourcing selections are factored into the CO₂ and water calculations above. Configure material sources in the year tabs to see the impact.")
-    
-    # Enhanced material breakdown
-    if cumulative_materials:
-        st.subheader("📊 Enhanced Material Analysis")
-        
-        # Create material categories
-        material_categories = {
-            "Active Materials": ["NCM", "CAM", "Graphite", "Li"],
-            "Binders & Solvents": ["PVDF", "NMP", "PAA", "SBR", "CMC"],
-            "Structural Components": ["Al Foil", "Cu Foil", "Separator", "Can", "Top-cap"],
-            "Additives": ["Carbon Black", "SWCNT", "MWCNT", "Boehmite"]
-        }
-        
-        categorized_materials = {}
-        for category, keywords in material_categories.items():
-            categorized_materials[category] = {}
-            for material, qty in cumulative_materials.items():
-                if any(keyword.lower() in material.lower() for keyword in keywords):
-                    categorized_materials[category][material] = qty
-        
-        # Display categorized materials
-        category_cols = st.columns(len(material_categories))
-        for i, (category, materials) in enumerate(categorized_materials.items()):
-            with category_cols[i]:
-                st.markdown(f"**{category}**")
-                if materials:
-                    total_qty = sum(materials.values())
-                    st.metric("Total Quantity", f"{total_qty:,.1f}")
-                    
-                    # Show top materials in this category
-                    sorted_materials = sorted(materials.items(), key=lambda x: x[1], reverse=True)[:5]
-                    for material, qty in sorted_materials:
-                        material_name = material.split("(")[0].strip()
-                        st.write(f"• {material_name}: {qty:,.1f}")
-    
-    # Cost-benefit analysis section
-    st.subheader("💰 Cost-Benefit Analysis")
-    
-    if any(year_data):
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("**Cost Summary**")
-            total_energy_cost = df["Total Cost (£)"].sum()
-            avg_cost_per_gwh = total_energy_cost / df["Total Energy (GWh)"].sum() if df["Total Energy (GWh)"].sum() > 0 else 0
-            avg_cost_per_tco2 = total_energy_cost / df["Total CO2 (tCO2)"].sum() if df["Total CO2 (tCO2)"].sum() > 0 else 0
-            
-            st.metric("Total Energy Cost", f"£{total_energy_cost:,.0f}")
-            st.metric("Cost per GWh", f"£{avg_cost_per_gwh:,.0f}")
-            st.metric("Cost per tCO₂", f"£{avg_cost_per_tco2:,.0f}")
-        
-        with col2:
-            st.markdown("**Efficiency Metrics**")
-            total_cells = df["Total Cells"].sum()
-            total_energy = df["Total Energy (GWh)"].sum()
-            
-            cells_per_gwh = total_cells / total_energy if total_energy > 0 else 0
-            co2_per_cell = df["Total CO2 (tCO2)"].sum() / total_cells if total_cells > 0 else 0
-            energy_per_cell = total_energy * 1000 / total_cells if total_cells > 0 else 0  # MWh per cell
-            
-            st.metric("Cells per GWh", f"{cells_per_gwh:,.0f}")
-            st.metric("CO₂ per Cell", f"{co2_per_cell:.4f} tCO₂")
-            st.metric("Energy per Cell", f"{energy_per_cell:.3f} MWh")
-        
-        # Combine all material data
-        materials_combined = pd.concat(annual_materials_list, axis=1).fillna(0)
-        
-        # Show top 10 materials by total usage
-        if not materials_combined.empty:
-            # Calculate total usage for each material
-            materials_combined['Total'] = materials_combined.select_dtypes(include=[np.number]).sum(axis=1)
-            top_materials = materials_combined.nlargest(10, 'Total')
-            
-            st.write("**Top 10 Materials by Total Usage (2027-2035)**")
-            st.dataframe(
-                top_materials,
-                use_container_width=True,
-                column_config={col: st.column_config.NumberColumn(format="%.2f") for col in top_materials.columns if col != 'Material'}
+                # --- Combine UK + India results for this year ---
+        total_energy = uk_results["energy_gwh"] + india_results["energy_gwh"]
+        total_cells = uk_results["total_cells"] + india_results["total_cells"]
+        total_energy_co2 = uk_results["energy_co2"] + india_results["energy_co2"]
+        total_material_co2 = uk_results["material_co2"] + india_results["material_co2"]
+        total_co2 = total_energy_co2 + total_material_co2
+        total_water = uk_results["total_water"] + india_results["total_water"]
+        total_cost = calculate_costs(uk_results["energy_gwh"], india_results["energy_gwh"])
+
+        # Merge materials for this year
+        year_materials = {}
+        for materials_dict in [uk_results["materials"], india_results["materials"]]:
+            for material, qty in materials_dict.items():
+                year_materials[material] = year_materials.get(material, 0) + qty
+
+        # Update cumulative materials (2027–2035)
+        for material, qty in year_materials.items():
+            cumulative_materials[material] = cumulative_materials.get(material, 0) + qty
+
+        # Store year row for downstream tables/plots
+        year_data.append({
+            "Year": year,
+            "Total Cells": total_cells,
+            "Total Energy (GWh)": total_energy,
+            "Total CO2 (tCO2)": total_co2,
+            "Energy CO2 (tCO2)": total_energy_co2,
+            "Material CO2 (tCO2)": total_material_co2,
+            "Total Water (m³)": total_water,
+            "Total Cost (£)": total_cost,
+            "UK Energy (GWh)": uk_results["energy_gwh"],
+            "UK Cells": uk_results["total_cells"],
+            "India Energy (GWh)": india_results["energy_gwh"],
+            "India Cells": india_results["total_cells"],
+        })
+
+        # Keep per-year materials (for “Top 10 Materials by Year” chart later)
+        if year_materials:
+            mat_df = pd.DataFrame(
+                [(k, v) for k, v in year_materials.items()],
+                columns=["Material", f"Qty_{year}"]
             )
-            
-            # Material usage chart
-            fig_materials = go.Figure()
-            for year in YEARS:
-                col_name = f"Qty_{year}"
-                if col_name in top_materials.columns:
-                    fig_materials.add_trace(
-                        go.Bar(
-                            name=str(year),
-                            x=top_materials.index,
-                            y=top_materials[col_name]
-                        )
-                    )
-            
-            fig_materials.update_layout(
-                title="Top 10 Materials Usage by Year",
-                xaxis_title="Materials",
-                yaxis_title="Quantity",
-                barmode='stack',
-                height=500
-            )
-            st.plotly_chart(fig_materials, use_container_width=True)
-    
-    # Cumulative totals
-    st.subheader("📊 Cumulative Totals (2027–2035)")
-    cumulative_df = pd.DataFrame({
-        "Metric": ["Total Cells", "Total Energy (GWh)", "Total CO₂ (tCO₂)", "Energy CO₂ (tCO₂)", 
-                  "Material CO₂ (tCO₂)", "Total Water (m³)", "Total Cost (£)"],
-        "Value": [
-            df["Total Cells"].sum(),
-            df["Total Energy (GWh)"].sum(),
-            df["Total CO2 (tCO2)"].sum(),
-            df["Energy CO2 (tCO2)"].sum(),
-            df["Material CO2 (tCO2)"].sum(),
-            df["Total Water (m³)"].sum(),
-            df["Total Cost (£)"].sum()
-        ]
-    })
-    
-    st.dataframe(
-        cumulative_df,
-        use_container_width=True,
-        column_config={
-            "Value": st.column_config.NumberColumn(format="%.2f")
-        }
-    )
-    
-    # Cumulative materials
-    if cumulative_materials:
-        st.subheader("🔧 Cumulative Material Requirements (2027-2035)")
-        cum_materials_df = pd.DataFrame([
-            {"Material": material, "Total Quantity": qty, "Unit": material.split("(")[-1].replace(")", "") if "(" in material else ""}
-            for material, qty in cumulative_materials.items()
-        ]).sort_values("Total Quantity", ascending=False)
-        
-        # Show top 20 materials
-        st.dataframe(
-            cum_materials_df.head(20),
-            use_container_width=True,
-            column_config={
-                "Total Quantity": st.column_config.NumberColumn(format="%.2f")
-            }
-        )
-        
-        # Download buttons
-        st.subheader("📥 Download Data")
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            csv_annual = df.to_csv(index=False)
-            st.download_button(
-                label="📊 Download Annual Data",
-                data=csv_annual,
-                file_name="agrata_annual_data.csv",
-                mime="text/csv"
-            )
-        
-        with col2:
-            csv_materials = cum_materials_df.to_csv(index=False)
-            st.download_button(
-                label="🔧 Download Materials Data",
-                data=csv_materials,
-                file_name="agrata_materials_data.csv",
-                mime="text/csv"
-            )
-        
-        with col3:
-            # Create summary report
-            summary_data = {
-                "Summary": ["Peak Annual CO₂", "Average Annual CO₂", "Peak Annual Energy", "Average Annual Energy"],
-                "Value": [
-                    f"{df['Total CO2 (tCO2)'].max():.0f} tCO₂",
-                    f"{df['Total CO2 (tCO2)'].mean():.0f} tCO₂",
-                    f"{df['Total Energy (GWh)'].max():.1f} GWh",
-                    f"{df['Total Energy (GWh)'].mean():.1f} GWh"
-                ]
-            }
-            summary_df = pd.DataFrame(summary_data)
-            csv_summary = summary_df.to_csv(index=False)
-            st.download_button(
-                label="📋 Download Summary",
-                data=csv_summary,
-                file_name="agrata_summary.csv",
-                mime="text/csv"
-            )
+            annual_materials_list.append(mat_df)
 
-else:
-    st.info("👆 Please configure production parameters for at least one year to see results.")
+        # Optional: small per-year summary in the tab
+        if total_cells > 0:
+            st.markdown("### 📈 Year Summary")
+            c1, c2, c3, c4 = st.columns(4)
+            with c1:
+                st.metric("Total Cells", f"{total_cells:,.0f}")
+            with c2:
+                st.metric("Total Energy", f"{total_energy:.1f} GWh")
+            with c3:
+                st.metric("Total CO₂", f"{total_co2:,.0f} tCO₂")
+            with c4:
+                st.metric("Total Cost", f"£{total_cost:,.0f}")
 
-# Footer
-st.markdown("---")
-st.markdown("""
-### 📝 Model Information
-- **Energy Capacity**: UK (50 GWh/line), India (70 GWh/line)
-- **Cell Capacity**: Both countries (300 cells/line at 100% power)
-- **Energy Pricing**: UK (£0.258/kWh), India (£0.070/kWh)
-- **CO₂ Calculations**: Based on energy mix formulas and material-specific emissions
-- **Materials**: Comprehensive bill-of-materials for each cell type with silicon percentage variations
-
-*Model uses placeholder values for materials and emissions - update with actual data as needed.*
-""")
-
-# Debugging section (can be removed in production)
-with st.expander("🔧 Debug Information", expanded=False):
-    st.write("**Energy Mix Formulas:**")
-    for name, formula in ENERGY_MIXES.items():
-        st.write(f"- {name}: Test with 1 GWh = {formula(1):.2f} tCO₂")
-
-    st.write("**Material Data Structure Check:**")
-    st.write(f"Cell types available: {list(materials_data.keys())}")
-    st.write(f"NMC Cell 1 materials count: {len(materials_data['NMC Cell 1']['materials'])}")
-    st.write(f"Silicon percentages for NMC Cell 1: {list(materials_data['NMC Cell 1']['silicon_co2_water_per_kwh'].keys())}")
-
-if __name__ == "__main__":
-    st.markdown("### 🚀 Ready to run!")
-    st.markdown("Save this file as `agrata_carbon_model.py` and run with: `streamlit run agrata_carbon_model.py`")
