@@ -1,127 +1,98 @@
-# Material sourcing configuration (only for NMC cells)
-        uk_material_sourcing = {}
-        india_material_sourcing = {}
-        
-        if uk_lines > 0 and (uk_mix_nmc1 > 0 or uk_mix_nmc2 > 0):
-            with st.expander(f"🔬 UK Material Sourcing Configuration ({year})", expanded=False):
-                if uk_mix_nmc1 > 0:
-                    st.markdown("**NMC Cell 1 Material Sources**")
-                    uk_material_sourcing["NMC Cell 1"] = {}
-                    
-                    for material_category, sources in MATERIAL_SOURCES.items():
-                        st.markdown(f"*{material_category}*")
-                        uk_material_sourcing["NMC Cell 1"][material_category] = {}
-                        
-                        # Create columns for source selection
+# -------------------------
+# Material sourcing configuration (only for NMC cells) — REPLACE THIS WHOLE SECTION
+# -------------------------
+uk_material_sourcing = {}
+india_material_sourcing = {}
+
+def render_material_sourcing(country_prefix, year, mix_nmc1, mix_nmc2, label_prefix):
+    material_sourcing = {}
+    if mix_nmc1 > 0 or mix_nmc2 > 0:
+        with st.expander(f"🔬 {label_prefix} Material Sourcing Configuration ({year})", expanded=False):
+            # Toggle between unique selection (single source) and % mix (multiple)
+            sourcing_mode = st.radio(
+                "Selection mode",
+                options=["Unique source per category", "Percent mix across sources"],
+                index=0,
+                key=f"{country_prefix}_sourcing_mode_{year}",
+                horizontal=True,
+                help="Pick one source per category, or distribute percentages that sum to 100%."
+            )
+
+            def render_for_cell(cell_key, cell_title):
+                st.markdown(f"**{cell_title} Material Sources**")
+                material_sourcing[cell_key] = {}
+
+                for material_category, sources in MATERIAL_SOURCES.items():
+                    st.markdown(f"*{material_category}*")
+                    material_sourcing[cell_key][material_category] = {}
+
+                    if sourcing_mode == "Unique source per category":
+                        # Single select — assigns 100% to the chosen one, 0% to others
+                        selected = st.selectbox(
+                            "Select source",
+                            options=list(sources.keys()),
+                            key=f"{country_prefix}_{cell_key}_{material_category}_{year}_unique",
+                        )
+                        for src in sources.keys():
+                            material_sourcing[cell_key][material_category][src] = 100 if src == selected else 0
+                        st.success("✅ Using a single source (100%) for this category")
+                    else:
+                        # Percent mode — show inputs for each source, require sum = 100 or 0
                         source_cols = st.columns(min(3, len(sources)))
                         col_idx = 0
                         total_pct = 0
-                        
                         for source_name, source_data in sources.items():
                             with source_cols[col_idx % len(source_cols)]:
                                 pct = st.number_input(
                                     f"{source_name[:50]}..." if len(source_name) > 50 else source_name,
                                     min_value=0, max_value=100, value=0,
-                                    key=f"uk_nmc1_{material_category}_{source_name}_{year}",
+                                    key=f"{country_prefix}_{cell_key}_{material_category}_{source_name}_{year}",
                                     help=f"CO₂: +{source_data['co2']} kg/kWh, Water: +{source_data['water']} m³/kWh"
                                 )
-                                uk_material_sourcing["NMC Cell 1"][material_category][source_name] = pct
+                                material_sourcing[cell_key][material_category][source_name] = pct
                                 total_pct += pct
                             col_idx += 1
-                        
+
                         if total_pct > 0 and total_pct != 100:
                             st.warning(f"{material_category} percentages sum to {total_pct}% (should be 100% or 0%)")
                         elif total_pct == 100:
                             st.success(f"✅ {material_category} sourcing configured")
-                
-                if uk_mix_nmc2 > 0:
-                    st.markdown("**NMC Cell 2 Material Sources**")
-                    uk_material_sourcing["NMC Cell 2"] = {}
-                    
-                    for material_category, sources in MATERIAL_SOURCES.items():
-                        st.markdown(f"*{material_category}*")
-                        uk_material_sourcing["NMC Cell 2"][material_category] = {}
-                        
-                        source_cols = st.columns(min(3, len(sources)))
-                        col_idx = 0
-                        total_pct = 0
-                        
-                        for source_name, source_data in sources.items():
-                            with source_cols[col_idx % len(source_cols)]:
-                                pct = st.number_input(
-                                    f"{source_name[:50]}..." if len(source_name) > 50 else source_name,
-                                    min_value=0, max_value=100, value=0,
-                                    key=f"uk_nmc2_{material_category}_{source_name}_{year}",
-                                    help=f"CO₂: +{source_data['co2']} kg/kWh, Water: +{source_data['water']} m³/kWh"
-                                )
-                                uk_material_sourcing["NMC Cell 2"][material_category][source_name] = pct
-                                total_pct += pct
-                            col_idx += 1
-                        
-                        if total_pct > 0 and total_pct != 100:
-                            st.warning(f"{material_category} percentages sum to {total_pct}% (should be 100% or 0%)")
-                        elif total_pct == 100:
-                            st.success(f"✅ {material_category} sourcing configured")
-        
-        if india_lines > 0 and (india_mix_nmc1 > 0 or india_mix_nmc2 > 0):
-            with st.expander(f"🔬 India Material Sourcing Configuration ({year})", expanded=False):
-                if india_mix_nmc1 > 0:
-                    st.markdown("**NMC Cell 1 Material Sources**")
-                    india_material_sourcing["NMC Cell 1"] = {}
-                    
-                    for material_category, sources in MATERIAL_SOURCES.items():
-                        st.markdown(f"*{material_category}*")
-                        india_material_sourcing["NMC Cell 1"][material_category] = {}
-                        
-                        source_cols = st.columns(min(3, len(sources)))
-                        col_idx = 0
-                        total_pct = 0
-                        
-                        for source_name, source_data in sources.items():
-                            with source_cols[col_idx % len(source_cols)]:
-                                pct = st.number_input(
-                                    f"{source_name[:50]}..." if len(source_name) > 50 else source_name,
-                                    min_value=0, max_value=100, value=0,
-                                    key=f"india_nmc1_{material_category}_{source_name}_{year}",
-                                    help=f"CO₂: +{source_data['co2']} kg/kWh, Water: +{source_data['water']} m³/kWh"
-                                )
-                                india_material_sourcing["NMC Cell 1"][material_category][source_name] = pct
-                                total_pct += pct
-                            col_idx += 1
-                        
-                        if total_pct > 0 and total_pct != 100:
-                            st.warning(f"{material_category} percentages sum to {total_pct}% (should be 100% or 0%)")
-                        elif total_pct == 100:
-                            st.success(f"✅ {material_category} sourcing configured")
-                
-                if india_mix_nmc2 > 0:
-                    st.markdown("**NMC Cell 2 Material Sources**")
-                    india_material_sourcing["NMC Cell 2"] = {}
-                    
-                    for material_category, sources in MATERIAL_SOURCES.items():
-                        st.markdown(f"*{material_category}*")
-                        india_material_sourcing["NMC Cell 2"][material_category] = {}
-                        
-                        source_cols = st.columns(min(3, len(sources)))
-                        col_idx = 0
-                        total_pct = 0
-                        
-                        for source_name, source_data in sources.items():
-                            with source_cols[col_idx % len(source_cols)]:
-                                pct = st.number_input(
-                                    f"{source_name[:50]}..." if len(source_name) > 50 else source_name,
-                                    min_value=0, max_value=100, value=0,
-                                    key=f"india_nmc2_{material_category}_{source_name}_{year}",
-                                    help=f"CO₂: +{source_data['co2']} kg/kWh, Water: +{source_data['water']} m³/kWh"
-                                )
-                                india_material_sourcing["NMC Cell 2"][material_category][source_name] = pct
-                                total_pct += pct
-                            col_idx += 1
-                        
-                        if total_pct > 0 and total_pct != 100:
-                            st.warning(f"{material_category} percentages sum to {total_pct}% (should be 100% or 0%)")
-                        elif total_pct == 100:
-                            st.success(f"✅ {material_category} sourcing configured")import streamlit as st
+
+            if mix_nmc1 > 0:
+                render_for_cell("NMC Cell 1", "NMC Cell 1")
+            if mix_nmc2 > 0:
+                render_for_cell("NMC Cell 2", "NMC Cell 2")
+
+    return material_sourcing
+
+# Call the renderer right after you collect the UK/India mixes for each year (inside the year tab)
+# Example usage in your loop (keep near where you already compute uk_mix_nmc1, etc.):
+
+# UK
+if uk_lines > 0 and (uk_mix_nmc1 > 0 or uk_mix_nmc2 > 0):
+    uk_material_sourcing = render_material_sourcing(
+        country_prefix="uk",
+        year=year,
+        mix_nmc1=uk_mix_nmc1,
+        mix_nmc2=uk_mix_nmc2,
+        label_prefix="UK"
+    )
+else:
+    uk_material_sourcing = {}
+
+# India
+if india_lines > 0 and (india_mix_nmc1 > 0 or india_mix_nmc2 > 0):
+    india_material_sourcing = render_material_sourcing(
+        country_prefix="india",
+        year=year,
+        mix_nmc1=india_mix_nmc1,
+        mix_nmc2=india_mix_nmc2,
+        label_prefix="India"
+    )
+else:
+    india_material_sourcing = {}
+
+
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -204,7 +175,7 @@ MATERIAL_SOURCES = {
 }
 
 # -------------------------
-# MATERIAL TABLES (with corrected data structure)
+# MATERIAL TABLES — CLEANED
 # -------------------------
 materials_data = {
     "NMC Cell 1": {
@@ -243,9 +214,7 @@ materials_data = {
             "QR Code Tape": {"qty": 0.5, "unit": "m2"},
             "Battery Core Forming Nail": {"qty": 2.0, "unit": "Units"}
         },
-        # Base CO2 and water values (per kWh)
         "base_co2_water_per_kwh": {"co2": 68.85, "water": 24.14},
-        # Additional values based on silicon percentage
         "silicon_co2_water_per_kwh": {
             3: {"co2": 2, "water": 5},
             5: {"co2": 3, "water": 6},
@@ -290,45 +259,7 @@ materials_data = {
             "Terminal Tape": {"qty": 0.2, "unit": "m2"},
             "PET Film": {"qty": 0.2, "unit": "m2"}
         },
-    "NMC Cell 2": {
-        "materials": {
-            "NCM - CAM powder": {"qty": 0.2, "unit": "kg"},
-            "SP-01 - carbon black cam": {"qty": 0.2, "unit": "kg"},
-            "PVDF-1 Cathode": {"qty": 0.2, "unit": "kg"},
-            "NMP - solvent": {"qty": 0.2, "unit": "kg"},
-            "Boehmite": {"qty": 0.2, "unit": "kg"},
-            "PVDF-2": {"qty": 0.2, "unit": "kg"},
-            "Graphite - 100% synthetic": {"qty": 0.2, "unit": "kg"},
-            "SWCNT Single wall Carbon Nano tube": {"qty": 0.2, "unit": "kg"},
-            "MWCNT Multiwall carbon nano tube": {"qty": 0.2, "unit": "kg"},
-            "PAA - anode binder": {"qty": 0.2, "unit": "kg"},
-            "Anoder Binder - SBR": {"qty": 0.2, "unit": "kg"},
-            "Thickener (CMC)": {"qty": 0.2, "unit": "kg"},
-            "Al Foil (Cell 2)": {"qty": 0.2, "unit": "kg"},
-            "Cu Foil (Cell 2)": {"qty": 0.2, "unit": "kg"},
-            "LT Electrolyte": {"qty": 0.2, "unit": "kg"},
-            "Separator": {"qty": 5.2, "unit": "m2"},
-            "Tape": {"qty": 0.4, "unit": "m2"},
-            "Aluminium Can (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Positive Top-cap (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Negative Top-cap (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Blue Film (Cell 2)": {"qty": 0.2, "unit": "m2"},
-            "Positive Vent Cover (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Negative Vent Cover (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Rubber Nail": {"qty": 1.0, "unit": "Units"},
-            "Al Nail (Seal Pin)": {"qty": 1.0, "unit": "Units"},
-            "Insulation Bracket (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Mylar Stack Wrap (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Mylar Reinforcing Strip (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Mylar Tape": {"qty": 0.2, "unit": "m2"},
-            "Welding Printing Adhesive": {"qty": 0.2, "unit": "m2"},
-            "QR Code Tape": {"qty": 0.2, "unit": "m2"},
-            "Terminal Tape": {"qty": 0.2, "unit": "m2"},
-            "PET Film": {"qty": 0.2, "unit": "m2"}
-        },
-        # Base CO2 and water values (per kWh)
         "base_co2_water_per_kwh": {"co2": 68.85, "water": 24.14},
-        # Additional values based on silicon percentage
         "silicon_co2_water_per_kwh": {
             3: {"co2": 2, "water": 3},
             5: {"co2": 3, "water": 4},
@@ -360,10 +291,10 @@ materials_data = {
             "CMC Binder - Cathode": {"qty": 0.3, "unit": "kg"},
             "Carbon Black - Cathode": {"qty": 0.3, "unit": "kg"}
         },
-        # Base CO2 and water values (per kWh) - LFP doesn't have silicon variations
-        "base_co2_water_per_kwh": {"co2": 68.85 + 8, "water": 24.14 + 9}  # Base + LFP specific
+        "base_co2_water_per_kwh": {"co2": 68.85 + 8, "water": 24.14 + 9}
     }
 }
+
 
 # -------------------------
 # HELPER FUNCTIONS
@@ -395,151 +326,91 @@ def calculate_material_sourcing_impact(cell_type, material_sourcing_mix):
     
     return total_co2_addition, total_water_addition
 
+def calculate_material_sourcing_impact(material_sourcing_mix):
+    """Calculate the additional CO2 and water impact from material sourcing choices"""
+    total_co2_addition = 0
+    total_water_addition = 0
+
+    for material_category, sources in material_sourcing_mix.items():
+        if material_category not in MATERIAL_SOURCES:
+            continue
+
+        category_co2 = 0
+        category_water = 0
+        total_percentage = 0
+
+        for source_name, percentage in sources.items():
+            if percentage > 0 and source_name in MATERIAL_SOURCES[material_category]:
+                source_data = MATERIAL_SOURCES[material_category][source_name]
+                category_co2 += source_data["co2"] * (percentage / 100)
+                category_water += source_data["water"] * (percentage / 100)
+                total_percentage += percentage
+
+        # Only add if the percentages sum to 100% for this category
+        if total_percentage == 100:
+            total_co2_addition += category_co2
+            total_water_addition += category_water
+
+    return total_co2_addition, total_water_addition
+
+
 def calculate_site_metrics(lines, power_pct, cell_mix, silicon_pcts, material_sourcing, country, energy_mix_name):
     """Calculate energy, cells, emissions, and materials for a site"""
-    
-    # Calculate energy capacity based on country
+
+    # Capacity
     if country == "UK":
         max_gwh_per_line = 50
         max_cells_per_line = 300
-    else:  # India
+    else:
         max_gwh_per_line = 70
         max_cells_per_line = 300
-    
-    # Calculate actual energy and cell production
+
     energy_gwh = lines * max_gwh_per_line * (power_pct / 100)
     total_cells = lines * max_cells_per_line * (power_pct / 100)
-    
-    # Initialize outputs
+
     site_materials = {}
     total_material_co2 = 0
     total_material_water = 0
-    
-    # Process each cell type
+
     for cell_type, mix_percentage in cell_mix.items():
         if mix_percentage <= 0:
             continue
-            
+
         cells_of_this_type = total_cells * (mix_percentage / 100)
-        
         if cells_of_this_type <= 0:
             continue
-            
-        # Get material data
+
         cell_data = materials_data[cell_type]
-        
-        # Calculate material requirements
+
+        # BOM aggregation
         for material_name, material_info in cell_data["materials"].items():
             material_qty = material_info["qty"] * cells_of_this_type
             material_key = f"{material_name} ({material_info['unit']})"
-            
-            if material_key in site_materials:
-                site_materials[material_key] += material_qty
-            else:
-                site_materials[material_key] = material_qty
-        
-        # Calculate CO2 and water for materials (per kWh of energy used)
-        if cell_type == "LFP":
-            co2_per_kwh = cell_data["base_co2_water_per_kwh"]["co2"]
-            water_per_kwh = cell_data["base_co2_water_per_kwh"]["water"]
-        else:
-            # Start with base values
-            co2_per_kwh = cell_data["base_co2_water_per_kwh"]["co2"]
-            water_per_kwh = cell_data["base_co2_water_per_kwh"]["water"]
-            
-            # Add silicon-specific values
+            site_materials[material_key] = site_materials.get(material_key, 0) + material_qty
+
+        # Base per-kWh impacts
+        co2_per_kwh = cell_data["base_co2_water_per_kwh"]["co2"]
+        water_per_kwh = cell_data["base_co2_water_per_kwh"]["water"]
+
+        # Silicon adjustments (for NMCs)
+        if cell_type != "LFP":
             silicon_pct = silicon_pcts.get(cell_type, 3)
             co2_per_kwh += cell_data["silicon_co2_water_per_kwh"][silicon_pct]["co2"]
             water_per_kwh += cell_data["silicon_co2_water_per_kwh"][silicon_pct]["water"]
-            
-            # Add material sourcing impact
+
+            # Material sourcing increments (only if provided for this cell)
             if cell_type in material_sourcing:
-                sourcing_co2, sourcing_water = calculate_material_sourcing_impact(cell_type, material_sourcing[cell_type])
+                sourcing_co2, sourcing_water = calculate_material_sourcing_impact(material_sourcing[cell_type])
                 co2_per_kwh += sourcing_co2
                 water_per_kwh += sourcing_water
-        
-        # Calculate material-related emissions and water usage
-        energy_kwh_for_this_cell_type = energy_gwh * (mix_percentage / 100) * 1e6  # Convert GWh to kWh
-        total_material_co2 += energy_kwh_for_this_cell_type * co2_per_kwh / 1000  # Convert to tCO2
-        total_material_water += energy_kwh_for_this_cell_type * water_per_kwh / 1000  # Convert to m³
-    
-    # Calculate energy-related CO2 emissions using the energy mix formula
+
+        energy_kwh_for_this_cell_type = energy_gwh * (mix_percentage / 100) * 1e6  # GWh -> kWh
+        total_material_co2 += energy_kwh_for_this_cell_type * co2_per_kwh / 1000  # -> tCO2
+        total_material_water += energy_kwh_for_this_cell_type * water_per_kwh / 1000  # -> m³
+
     energy_co2 = ENERGY_MIXES[energy_mix_name](energy_gwh) if energy_gwh > 0 else 0
-    
-    # Total CO2 is energy emissions plus material emissions
     total_co2 = energy_co2 + total_material_co2
-    
-    return {
-        "energy_gwh": energy_gwh,
-        "total_cells": total_cells,
-        "total_co2": total_co2,
-        "energy_co2": energy_co2,
-        "material_co2": total_material_co2,
-        "total_water": total_material_water,
-        "materials": site_materials
-    }
-    """Calculate energy, cells, emissions, and materials for a site"""
-    
-    # Calculate energy capacity based on country
-    if country == "UK":
-        max_gwh_per_line = 50
-        max_cells_per_line = 300
-    else:  # India
-        max_gwh_per_line = 70
-        max_cells_per_line = 300
-    
-    # Calculate actual energy and cell production
-    energy_gwh = lines * max_gwh_per_line * (power_pct / 100)
-    total_cells = lines * max_cells_per_line * (power_pct / 100)
-    
-    # Initialize outputs
-    site_materials = {}
-    total_material_co2 = 0
-    total_material_water = 0
-    
-    # Process each cell type
-    for cell_type, mix_percentage in cell_mix.items():
-        if mix_percentage <= 0:
-            continue
-            
-        cells_of_this_type = total_cells * (mix_percentage / 100)
-        
-        if cells_of_this_type <= 0:
-            continue
-            
-        # Get material data
-        cell_data = materials_data[cell_type]
-        
-        # Calculate material requirements
-        for material_name, material_info in cell_data["materials"].items():
-            material_qty = material_info["qty"] * cells_of_this_type
-            material_key = f"{material_name} ({material_info['unit']})"
-            
-            if material_key in site_materials:
-                site_materials[material_key] += material_qty
-            else:
-                site_materials[material_key] = material_qty
-        
-        # Calculate CO2 and water for materials (per kWh of energy used)
-        if cell_type == "LFP":
-            co2_per_kwh = cell_data["co2_water_per_kwh"]["co2"]
-            water_per_kwh = cell_data["co2_water_per_kwh"]["water"]
-        else:
-            silicon_pct = silicon_pcts.get(cell_type, 3)  # Default to 3% if not specified
-            co2_per_kwh = cell_data["co2_water_per_kwh"][silicon_pct]["co2"]
-            water_per_kwh = cell_data["co2_water_per_kwh"][silicon_pct]["water"]
-        
-        # Calculate material-related emissions and water usage
-        energy_kwh_for_this_cell_type = energy_gwh * (mix_percentage / 100) * 1e6  # Convert GWh to kWh
-        total_material_co2 += energy_kwh_for_this_cell_type * co2_per_kwh / 1000  # Convert to tCO2
-        total_material_water += energy_kwh_for_this_cell_type * water_per_kwh / 1000  # Convert to m³
-    
-    # Calculate energy-related CO2 emissions using the energy mix formula
-    energy_co2 = ENERGY_MIXES[energy_mix_name](energy_gwh) if energy_gwh > 0 else 0
-    
-    # Total CO2 is energy emissions plus material emissions
-    total_co2 = energy_co2 + total_material_co2
-    
+
     return {
         "energy_gwh": energy_gwh,
         "total_cells": total_cells,
@@ -1033,11 +904,11 @@ with st.expander("🔧 Debug Information", expanded=False):
     st.write("**Energy Mix Formulas:**")
     for name, formula in ENERGY_MIXES.items():
         st.write(f"- {name}: Test with 1 GWh = {formula(1):.2f} tCO₂")
-    
-    st.write(f"**Material Data Structure Check:**")
+
+    st.write("**Material Data Structure Check:**")
     st.write(f"Cell types available: {list(materials_data.keys())}")
     st.write(f"NMC Cell 1 materials count: {len(materials_data['NMC Cell 1']['materials'])}")
-    st.write(f"Silicon percentages for NMC Cell 1: {list(materials_data['NMC Cell 1']['co2_water_per_kwh'].keys())}")
+    st.write(f"Silicon percentages for NMC Cell 1: {list(materials_data['NMC Cell 1']['silicon_co2_water_per_kwh'].keys())}")
 
 if __name__ == "__main__":
     st.markdown("### 🚀 Ready to run!")
