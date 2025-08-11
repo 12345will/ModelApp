@@ -466,6 +466,9 @@ cumulative_materials = {}
 # Create tabs for each year
 year_tabs = st.tabs([str(year) for year in YEARS])
 
+# Create tabs for each year
+year_tabs = st.tabs([str(year) for year in YEARS])
+
 for i, year in enumerate(YEARS):
     with year_tabs[i]:
         st.subheader(f"Year {year} Configuration")
@@ -520,6 +523,30 @@ for i, year in enumerate(YEARS):
         # Energy mix selection (applies to both countries)
         energy_mix = st.selectbox("Energy Mix", list(ENERGY_MIXES.keys()), key=f"energy_mix_{year}")
         
+        # --- NEW: Build sourcing UI here, after inputs are defined ---
+        if uk_lines > 0 and (uk_mix_nmc1 > 0 or uk_mix_nmc2 > 0):
+            uk_material_sourcing = render_material_sourcing(
+                country_prefix="uk",
+                year=year,
+                mix_nmc1=uk_mix_nmc1,
+                mix_nmc2=uk_mix_nmc2,
+                label_prefix="UK"
+            )
+        else:
+            uk_material_sourcing = {}
+
+        if india_lines > 0 and (india_mix_nmc1 > 0 or india_mix_nmc2 > 0):
+            india_material_sourcing = render_material_sourcing(
+                country_prefix="india",
+                year=year,
+                mix_nmc1=india_mix_nmc1,
+                mix_nmc2=india_mix_nmc2,
+                label_prefix="India"
+            )
+        else:
+            india_material_sourcing = {}
+        # --- end sourcing UI section ---
+
         # Calculate results for this year
         uk_results = {"energy_gwh": 0, "total_cells": 0, "total_co2": 0, "energy_co2": 0, "material_co2": 0, "total_water": 0, "materials": {}}
         india_results = {"energy_gwh": 0, "total_cells": 0, "total_co2": 0, "energy_co2": 0, "material_co2": 0, "total_water": 0, "materials": {}}
@@ -532,64 +559,7 @@ for i, year in enumerate(YEARS):
             india_mix = {"NMC Cell 1": india_mix_nmc1, "NMC Cell 2": india_mix_nmc2, "LFP": india_mix_lfp}
             india_results = calculate_site_metrics(india_lines, india_power, india_mix, india_silicon, india_material_sourcing, "India", energy_mix)
         
-        # Combine results
-        total_energy = uk_results["energy_gwh"] + india_results["energy_gwh"]
-        total_cells = uk_results["total_cells"] + india_results["total_cells"]
-        total_co2 = uk_results["total_co2"] + india_results["total_co2"]
-        total_energy_co2 = uk_results["energy_co2"] + india_results["energy_co2"]
-        total_material_co2 = uk_results["material_co2"] + india_results["material_co2"]
-        total_water = uk_results["total_water"] + india_results["total_water"]
-        total_cost = calculate_costs(uk_results["energy_gwh"], india_results["energy_gwh"])
-        
-        # Combine materials
-        year_materials = {}
-        for materials_dict in [uk_results["materials"], india_results["materials"]]:
-            for material, qty in materials_dict.items():
-                if material in year_materials:
-                    year_materials[material] += qty
-                else:
-                    year_materials[material] = qty
-        
-        # Update cumulative materials
-        for material, qty in year_materials.items():
-            if material in cumulative_materials:
-                cumulative_materials[material] += qty
-            else:
-                cumulative_materials[material] = qty
-        
-        # Store year data
-        year_data.append({
-            "Year": year,
-            "Total Cells": total_cells,
-            "Total Energy (GWh)": total_energy,
-            "Total CO2 (tCO2)": total_co2,
-            "Energy CO2 (tCO2)": total_energy_co2,
-            "Material CO2 (tCO2)": total_material_co2,
-            "Total Water (m³)": total_water,
-            "Total Cost (£)": total_cost,
-            "UK Energy (GWh)": uk_results["energy_gwh"],
-            "UK Cells": uk_results["total_cells"],
-            "India Energy (GWh)": india_results["energy_gwh"],
-            "India Cells": india_results["total_cells"]
-        })
-        
-        # Add materials data
-        if year_materials:
-            mat_df = pd.DataFrame([(k, v) for k, v in year_materials.items()], columns=["Material", f"Qty_{year}"])
-            annual_materials_list.append(mat_df)
-        
-        # Display year summary
-        if total_cells > 0:
-            st.markdown("### 📈 Year Summary")
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("Total Cells", f"{total_cells:,.0f}")
-            with col2:
-                st.metric("Total Energy", f"{total_energy:.1f} GWh")
-            with col3:
-                st.metric("Total CO₂", f"{total_co2:,.0f} tCO₂")
-            with col4:
-                st.metric("Total Cost", f"£{total_cost:,.0f}")
+        # (The rest of your existing summary/materials code continues here…)
 
 # -------------------------
 # RESULTS AND ANALYSIS
