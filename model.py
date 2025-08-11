@@ -455,7 +455,7 @@ for i, year in enumerate(YEARS):
             india_material_sourcing = {}
         # --- end sourcing UI section ---
 
-        # Calculate results for this year
+               # Calculate results for this year
         uk_results = {"energy_gwh": 0, "total_cells": 0, "total_co2": 0, "energy_co2": 0, "material_co2": 0, "total_water": 0, "materials": {}}
         india_results = {"energy_gwh": 0, "total_cells": 0, "total_co2": 0, "energy_co2": 0, "material_co2": 0, "total_water": 0, "materials": {}}
 
@@ -467,13 +467,17 @@ for i, year in enumerate(YEARS):
             india_mix = {"NMC Cell 1": india_mix_nmc1, "NMC Cell 2": india_mix_nmc2, "LFP": india_mix_lfp}
             india_results = calculate_site_metrics(india_lines, india_power, india_mix, india_silicon, india_material_sourcing, "India", energy_mix)
 
-                # --- Combine UK + India results for this year ---
+        # --- Combine UK + India results for this year ---
         total_energy = uk_results["energy_gwh"] + india_results["energy_gwh"]
         total_cells = uk_results["total_cells"] + india_results["total_cells"]
-        total_energy_co2 = uk_results["energy_co2"] + india_results["energy_co2"]
-        total_material_co2 = uk_results["material_co2"] + india_results["material_co2"]
-        total_co2 = total_energy_co2 + total_material_co2
-        total_water = uk_results["total_water"] + india_results["total_water"]
+
+        # Breakouts
+        factory_co2 = uk_results["energy_co2"] + india_results["energy_co2"]      # factories (energy-related CO2)
+        battery_co2 = uk_results["material_co2"] + india_results["material_co2"]  # batteries (materials-related CO2)
+        total_co2 = factory_co2 + battery_co2
+
+        water_battery = uk_results["total_water"] + india_results["total_water"]   # water from materials model
+
         total_cost = calculate_costs(uk_results["energy_gwh"], india_results["energy_gwh"])
 
         # Merge materials for this year
@@ -492,9 +496,9 @@ for i, year in enumerate(YEARS):
             "Total Cells": total_cells,
             "Total Energy (GWh)": total_energy,
             "Total CO2 (tCO2)": total_co2,
-            "Energy CO2 (tCO2)": total_energy_co2,
-            "Material CO2 (tCO2)": total_material_co2,
-            "Total Water (m³)": total_water,
+            "Factory CO2 (tCO2)": factory_co2,
+            "Battery CO2 (tCO2)": battery_co2,
+            "Water Volume (m³)": water_battery,
             "Total Cost (£)": total_cost,
             "UK Energy (GWh)": uk_results["energy_gwh"],
             "UK Cells": uk_results["total_cells"],
@@ -510,16 +514,247 @@ for i, year in enumerate(YEARS):
             )
             annual_materials_list.append(mat_df)
 
-        # Optional: small per-year summary in the tab
+        # Per-year summary in the tab (now includes factory/battery CO2 and water)
         if total_cells > 0:
             st.markdown("### 📈 Year Summary")
-            c1, c2, c3, c4 = st.columns(4)
+            c1, c2, c3, c4, c5 = st.columns(5)
             with c1:
                 st.metric("Total Cells", f"{total_cells:,.0f}")
             with c2:
                 st.metric("Total Energy", f"{total_energy:.1f} GWh")
             with c3:
-                st.metric("Total CO₂", f"{total_co2:,.0f} tCO₂")
+                st.metric("Factory CO₂", f"{factory_co2:,.0f} tCO₂")
             with c4:
-                st.metric("Total Cost", f"£{total_cost:,.0f}")
+                st.metric("Battery CO₂", f"{battery_co2:,.0f} tCO₂")
+            with c5:
+                st.metric("Water Volume", f"{water_battery:,.0f} m³")
 
+# -------------------------
+# RESULTS AND ANALYSIS
+# -------------------------
+if year_data:
+    df = pd.DataFrame(year_data)
+
+    st.header("📊 Results & Analysis")
+
+    # Summary metrics (separate CO2 + water)
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        total_cells_all = df["Total Cells"].sum()
+        st.metric("Total Cells (2027–2035)", f"{total_cells_all:,.0f}")
+    with col2:
+        total_energy_all = df["Total Energy (GWh)"].sum()
+        st.metric("Total Energy", f"{total_energy_all:.1f} GWh")
+    with col3:
+        factory_co2_all = df["Factory CO2 (tCO2)"].sum()
+        st.metric("Factory CO₂", f"{factory_co2_all:,.0f} tCO₂")
+    with col4:
+        battery_co2_all = df["Battery CO2 (tCO2)"].sum()
+        st.metric("Battery CO₂", f"{battery_co2_all:,.0f} tCO₂")
+    with col5:
+        water_all = df["Water Volume (m³)"].sum()
+        st.metric("Water Volume", f"{water_all:,.0f} m³")
+
+    # Annual results table
+    st.subheader("Annual Results Summary")
+    display_df = df.copy()
+    st.dataframe(
+        display_df,
+        use_container_width=True,
+        column_config={
+            "Total Cells": st.column_config.NumberColumn(format="%.0f"),
+            "Total Energy (GWh)": st.column_config.NumberColumn(format="%.2f"),
+            "Total CO2 (tCO2)": st.column_config.NumberColumn(format="%.0f"),
+            "Factory CO2 (tCO2)": st.column_config.NumberColumn(format="%.0f"),
+            "Battery CO2 (tCO2)": st.column_config.NumberColumn(format="%.0f"),
+            "Water Volume (m³)": st.column_config.NumberColumn(format="%.0f"),
+            "Total Cost (£)": st.column_config.NumberColumn(format="£%.0f"),
+            "UK Energy (GWh)": st.column_config.NumberColumn(format="%.2f"),
+            "India Energy (GWh)": st.column_config.NumberColumn(format="%.2f"),
+        }
+    )
+
+    # Visualizations
+    st.subheader("📈 Visualizations")
+
+    fig_co2 = make_subplots(
+        rows=2, cols=2,
+        subplot_titles=("Annual CO₂ Emissions (Total)", "Cumulative CO₂ Emissions",
+                        "CO₂ Breakdown by Source", "Energy Production by Country"),
+        specs=[[{"secondary_y": False}, {"secondary_y": False}],
+               [{"secondary_y": False}, {"secondary_y": False}]]
+    )
+
+    # Annual total CO2
+    fig_co2.add_trace(
+        go.Bar(x=df["Year"], y=df["Total CO2 (tCO2)"], name="Total CO₂"),
+        row=1, col=1
+    )
+
+    # Cumulative total CO2
+    df["Cumulative CO2"] = df["Total CO2 (tCO2)"].cumsum()
+    fig_co2.add_trace(
+        go.Scatter(x=df["Year"], y=df["Cumulative CO2"], mode="lines+markers", name="Cumulative CO₂"),
+        row=1, col=2
+    )
+
+    # CO2 breakdown by source
+    fig_co2.add_trace(
+        go.Bar(x=df["Year"], y=df["Factory CO2 (tCO2)"], name="Factory CO₂"),
+        row=2, col=1
+    )
+    fig_co2.add_trace(
+        go.Bar(x=df["Year"], y=df["Battery CO2 (tCO2)"], name="Battery CO₂"),
+        row=2, col=1
+    )
+
+    # Energy by country
+    fig_co2.add_trace(
+        go.Bar(x=df["Year"], y=df["UK Energy (GWh)"], name="UK Energy"),
+        row=2, col=2
+    )
+    fig_co2.add_trace(
+        go.Bar(x=df["Year"], y=df["India Energy (GWh)"], name="India Energy"),
+        row=2, col=2
+    )
+
+    fig_co2.update_layout(height=800, showlegend=True, barmode="group", title_text="Carbon Emissions & Energy Analysis")
+    st.plotly_chart(fig_co2, use_container_width=True)
+
+    # Material sourcing impact analysis (info only)
+    if any(year_data):
+        st.subheader("🔬 Material Sourcing Impact Analysis")
+        st.info("Material sourcing selections are factored into the CO₂ and water calculations above. Configure material sources in the year tabs to see the impact.")
+
+    # Enhanced material breakdown (optional – keep if you already had it)
+    if cumulative_materials:
+        st.subheader("📊 Enhanced Material Analysis")
+        material_categories = {
+            "Active Materials": ["NCM", "CAM", "Graphite", "Li"],
+            "Binders & Solvents": ["PVDF", "NMP", "PAA", "SBR", "CMC"],
+            "Structural Components": ["Al Foil", "Cu Foil", "Separator", "Can", "Top-cap"],
+            "Additives": ["Carbon Black", "SWCNT", "MWCNT", "Boehmite"]
+        }
+        categorized_materials = {}
+        for category, keywords in material_categories.items():
+            categorized_materials[category] = {}
+            for material, qty in cumulative_materials.items():
+                if any(keyword.lower() in material.lower() for keyword in keywords):
+                    categorized_materials[category][material] = qty
+
+        category_cols = st.columns(len(material_categories))
+        for i, (category, materials) in enumerate(categorized_materials.items()):
+            with category_cols[i]:
+                st.markdown(f"**{category}**")
+                if materials:
+                    total_qty = sum(materials.values())
+                    st.metric("Total Quantity", f"{total_qty:,.1f}")
+                    sorted_materials = sorted(materials.items(), key=lambda x: x[1], reverse=True)[:5]
+                    for material, qty in sorted_materials:
+                        material_name = material.split("(")[0].strip()
+                        st.write(f"• {material_name}: {qty:,.1f}")
+
+    # Cost-benefit analysis section
+    st.subheader("💰 Cost-Benefit Analysis")
+    if any(year_data):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("**Cost Summary**")
+            total_energy_cost = df["Total Cost (£)"].sum()
+            avg_cost_per_gwh = total_energy_cost / df["Total Energy (GWh)"].sum() if df["Total Energy (GWh)"].sum() > 0 else 0
+            avg_cost_per_tco2 = total_energy_cost / df["Total CO2 (tCO2)"].sum() if df["Total CO2 (tCO2)"].sum() > 0 else 0
+            st.metric("Total Energy Cost", f"£{total_energy_cost:,.0f}")
+            st.metric("Cost per GWh", f"£{avg_cost_per_gwh:,.0f}")
+            st.metric("Cost per tCO₂", f"£{avg_cost_per_tco2:,.0f}")
+        with col2:
+            st.markdown("**Efficiency Metrics**")
+            total_cells_agg = df["Total Cells"].sum()
+            total_energy_agg = df["Total Energy (GWh)"].sum()
+            cells_per_gwh = total_cells_agg / total_energy_agg if total_energy_agg > 0 else 0
+            co2_per_cell = df["Total CO2 (tCO2)"].sum() / total_cells_agg if total_cells_agg > 0 else 0
+            energy_per_cell_mwh = total_energy_agg * 1000 / total_cells_agg if total_cells_agg > 0 else 0
+            st.metric("Cells per GWh", f"{cells_per_gwh:,.0f}")
+            st.metric("CO₂ per Cell", f"{co2_per_cell:.4f} tCO₂")
+            st.metric("Energy per Cell", f"{energy_per_cell_mwh:.3f} MWh")
+
+    # Combine all per-year materials dataframes (if any)
+    if annual_materials_list:
+        materials_combined = pd.concat(annual_materials_list, axis=1).fillna(0)
+        # Show top 10 materials by total usage
+        if not materials_combined.empty:
+            materials_combined['Total'] = materials_combined.select_dtypes(include=[np.number]).sum(axis=1)
+            top_materials = materials_combined.nlargest(10, 'Total')
+
+            st.write("**Top 10 Materials by Total Usage (2027–2035)**")
+            st.dataframe(
+                top_materials,
+                use_container_width=True,
+                column_config={col: st.column_config.NumberColumn(format="%.2f") for col in top_materials.columns if col != 'Material'}
+            )
+
+            fig_materials = go.Figure()
+            for year in YEARS:
+                col_name = f"Qty_{year}"
+                if col_name in top_materials.columns:
+                    fig_materials.add_trace(go.Bar(name=str(year), x=top_materials.index, y=top_materials[col_name]))
+            fig_materials.update_layout(
+                title="Top 10 Materials Usage by Year",
+                xaxis_title="Materials",
+                yaxis_title="Quantity",
+                barmode='stack',
+                height=500
+            )
+            st.plotly_chart(fig_materials, use_container_width=True)
+
+    # Cumulative totals (2027–2035)
+    st.subheader("📊 Cumulative Totals (2027–2035)")
+    cumulative_df = pd.DataFrame({
+        "Metric": [
+            "Total Cells",
+            "Total Energy (GWh)",
+            "Total CO₂ (tCO₂)",
+            "Factory CO₂ (tCO₂)",
+            "Battery CO₂ (tCO₂)",
+            "Water Volume (m³)",
+            "Total Cost (£)"
+        ],
+        "Value": [
+            df["Total Cells"].sum(),
+            df["Total Energy (GWh)"].sum(),
+            df["Total CO2 (tCO2)"].sum(),
+            df["Factory CO2 (tCO2)"].sum(),
+            df["Battery CO2 (tCO2)"].sum(),
+            df["Water Volume (m³)"].sum(),
+            df["Total Cost (£)"].sum()
+        ]
+    })
+
+    st.dataframe(
+        cumulative_df,
+        use_container_width=True,
+        column_config={
+            "Value": st.column_config.NumberColumn(format="%.2f")
+        }
+    )
+
+else:
+    st.info("👆 Please configure production parameters for at least one year to see results.")
+
+# Footer
+st.markdown("---")
+st.markdown("""
+### 📝 Model Information
+- **Energy Capacity**: UK (50 GWh/line), India (70 GWh/line)
+- **Cell Capacity**: Both countries (300 cells/line at 100% power)
+- **Energy Pricing**: UK (£0.258/kWh), India (£0.070/kWh)
+- **CO₂ Calculations**: Factory CO₂ from energy mix; Battery CO₂ from base + silicon + sourcing impacts
+- **Materials**: Comprehensive bill-of-materials for each cell type with silicon percentage variations
+""")
+
+# Debugging section (optional)
+with st.expander("🔧 Debug Information", expanded=False):
+    st.write("**Energy Mix Formulas (tCO₂ @ 1 GWh):**")
+    for name, formula in ENERGY_MIXES.items():
+        st.write(f"- {name}: {formula(1):.2f} tCO₂")
+    st.write("**Cell types available:**", list(materials_data.keys()))
+    st.write("NMC Cell 1 silicon options:", list(materials_data['NMC Cell 1']['silicon_co2_water_per_kwh'].keys()))
