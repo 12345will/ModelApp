@@ -677,35 +677,6 @@ if year_data:
             st.metric("CO₂ per Cell", f"{co2_per_cell:.4f} tCO₂")
             st.metric("Energy per Cell", f"{energy_per_cell_mwh:.3f} MWh")
 
-    # Combine all per-year materials dataframes (if any)
-    if annual_materials_list:
-        materials_combined = pd.concat(annual_materials_list, axis=1).fillna(0)
-        # Show top 10 materials by total usage
-        if not materials_combined.empty:
-            materials_combined['Total'] = materials_combined.select_dtypes(include=[np.number]).sum(axis=1)
-            top_materials = materials_combined.nlargest(10, 'Total')
-
-            st.write("**Top 10 Materials by Total Usage (2027–2035)**")
-            st.dataframe(
-                top_materials,
-                use_container_width=True,
-                column_config={col: st.column_config.NumberColumn(format="%.2f") for col in top_materials.columns if col != 'Material'}
-            )
-
-            fig_materials = go.Figure()
-            for year in YEARS:
-                col_name = f"Qty_{year}"
-                if col_name in top_materials.columns:
-                    fig_materials.add_trace(go.Bar(name=str(year), x=top_materials.index, y=top_materials[col_name]))
-            fig_materials.update_layout(
-                title="Top 10 Materials Usage by Year",
-                xaxis_title="Materials",
-                yaxis_title="Quantity",
-                barmode='stack',
-                height=500
-            )
-            st.plotly_chart(fig_materials, use_container_width=True)
-
     # Cumulative totals (2027–2035)
     st.subheader("📊 Cumulative Totals (2027–2035)")
     cumulative_df = pd.DataFrame({
