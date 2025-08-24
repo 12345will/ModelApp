@@ -295,7 +295,7 @@ def calculate_site_metrics(lines, power_pct, cell_mix, silicon_pcts, material_so
         max_gwh_per_line = 468
         max_cells_per_line = 4150000
     else:
-        max_gwh_per_line = 634
+        max_gwh_per_line = 671
         max_cells_per_line = 4150000
 
     energy_gwh = lines * max_gwh_per_line * (power_pct / 100)
