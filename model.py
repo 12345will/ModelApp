@@ -292,11 +292,11 @@ def calculate_material_sourcing_impact(material_sourcing_mix):
 def calculate_site_metrics(lines, power_pct, cell_mix, silicon_pcts, material_sourcing, country, energy_mix_name):
     """Calculate energy, cells, emissions, and materials for a site"""
     if country == "UK":
-        max_gwh_per_line = 50
-        max_cells_per_line = 300
+        max_gwh_per_line = 468
+        max_cells_per_line = 4150000
     else:
-        max_gwh_per_line = 70
-        max_cells_per_line = 300
+        max_gwh_per_line = 634
+        max_cells_per_line = 4150000
 
     energy_gwh = lines * max_gwh_per_line * (power_pct / 100)
     total_cells = lines * max_cells_per_line * (power_pct / 100)
