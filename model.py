@@ -168,10 +168,10 @@ materials_data = {
         "base_co2_water_per_kwh": {"co2": 54.16, "water": 21.11},
         "silicon_co2_water_per_kwh": {
             3: {"co2": 0, "water": 0},
-            5: {"co2": 3, "water": 4},
-            10: {"co2": 4, "water": 5},
-            15: {"co2": 5, "water": 6},
-            20: {"co2": 6, "water": 7}
+            5: {"co2": 0.066, "water": 0.001},
+            10: {"co2": 0.231, "water": 0.0035},
+            15: {"co2": 0.396, "water": 0.006},
+            20: {"co2": 0.561, "water": 0.0085}
         }
     },
     "LFP": {
