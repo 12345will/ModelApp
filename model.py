@@ -86,88 +86,88 @@ MATERIAL_SOURCES = {
 materials_data = {
     "NMC Cell 1": {
         "materials": {
-            "NCM": {"qty": 0.5, "unit": "kg"},
-            "SP-01": {"qty": 0.5, "unit": "kg"},
-            "PVDF-1": {"qty": 0.5, "unit": "kg"},
-            "NMP": {"qty": 0.5, "unit": "kg"},
-            "Boehmite": {"qty": 0.5, "unit": "kg"},
-            "PVDF-2": {"qty": 0.5, "unit": "kg"},
-            "Graphite": {"qty": 0.5, "unit": "kg"},
-            "SWCNT": {"qty": 0.5, "unit": "kg"},
-            "PAA": {"qty": 0.5, "unit": "kg"},
-            "Anoder Binder": {"qty": 0.5, "unit": "kg"},
-            "Thickener (CMC)": {"qty": 0.5, "unit": "kg"},
-            "Al Foil (Cell 1)": {"qty": 0.5, "unit": "kg"},
-            "Cu Foil (Cell 1)": {"qty": 0.5, "unit": "kg"},
-            "LT Electrolyte": {"qty": 0.5, "unit": "kg"},
-            "Separator": {"qty": 3.5, "unit": "m2"},
-            "Tape": {"qty": 1.0, "unit": "m2"},
+            "NCM": {"qty": 0.4862, "unit": "kg"},
+            "SP-01": {"qty": 0.005, "unit": "kg"},
+            "PVDF-1": {"qty": 0.005, "unit": "kg"},
+            "NMP": {"qty": 0.1080, "unit": "kg"},
+            "Boehmite": {"qty": 0.0021, "unit": "kg"},
+            "PVDF-2": {"qty": 0.0003, "unit": "kg"},
+            "Graphite": {"qty": 0.2987, "unit": "kg"},
+            "SWCNT": {"qty": 0.0315, "unit": "kg"},
+            "PAA": {"qty": 0.0684, "unit": "kg"},
+            "Anoder Binder": {"qty": 0.0039, "unit": "kg"},
+            "Thickener (CMC)": {"qty": 0.0017, "unit": "kg"},
+            "Al Foil (Cell 1)": {"qty": 0.05352, "unit": "kg"},
+            "Cu Foil (Cell 1)": {"qty": 0.08832, "unit": "kg"},
+            "LT Electrolyte": {"qty": 0.1966, "unit": "kg"},
+            "Separator": {"qty": 3.1183, "unit": "m2"},
+            "Tape": {"qty": 0.0068, "unit": "m2"},
             "Aluminium Can (Cell 1)": {"qty": 1.0, "unit": "Units"},
             "Positive Top-cap (Cell 1)": {"qty": 1.0, "unit": "Units"},
             "Negative Top-cap (Cell 1)": {"qty": 1.0, "unit": "Units"},
-            "Blue Film (Cell 1)": {"qty": 1.0, "unit": "m2"},
+            "Blue Film (Cell 1)": {"qty": 0.07, "unit": "m2"},
             "Positive Vent Cover (Cell 1)": {"qty": 1.0, "unit": "Units"},
             "Negative Vent Cover (Cell 1)": {"qty": 1.0, "unit": "Units"},
             "Rubber Nail": {"qty": 1.0, "unit": "Units"},
             "Al Nail (Seal Pin)": {"qty": 1.0, "unit": "Units"},
             "Insulation Bracket (Cell 1)": {"qty": 1.0, "unit": "Units"},
             "Mylar Stack Wrap (Cell 1)": {"qty": 1.0, "unit": "Units"},
-            "Mylar Reinforcing Strip (Cell 1)": {"qty": 1.0, "unit": "Units"},
-            "MWCNT": {"qty": 0.5, "unit": "kg"},
-            "Plasticiser": {"qty": 0.5, "unit": "kg"},
-            "Mylar Tape": {"qty": 0.5, "unit": "m2"},
-            "Welding Printing Adhesive": {"qty": 0.5, "unit": "m2"},
-            "QR Code Tape": {"qty": 0.5, "unit": "m2"},
+            "Mylar Reinforcing Strip (Cell 1)": {"qty": 2.0, "unit": "Units"},
+            "MWCNT": {"qty": 0.0464, "unit": "kg"},
+            "Plasticiser": {"qty": 0.0013, "unit": "kg"},
+            "Mylar Tape": {"qty": 0.0037, "unit": "m2"},
+            "Welding Printing Adhesive": {"qty": 0.0012, "unit": "m2"},
+            "QR Code Tape": {"qty": 0.0003, "unit": "m2"},
             "Battery Core Forming Nail": {"qty": 2.0, "unit": "Units"}
         },
         "base_co2_water_per_kwh": {"co2": 68.85, "water": 24.14},
         "silicon_co2_water_per_kwh": {
-            3: {"co2": 2, "water": 5},
-            5: {"co2": 3, "water": 6},
-            10: {"co2": 4, "water": 7},
-            15: {"co2": 5, "water": 8},
-            20: {"co2": 6, "water": 9}
+            3: {"co2": 0, "water": 0},
+            5: {"co2": 0.073, "water": 0.001},
+            10: {"co2": 0.2555, "water": 0.0035},
+            15: {"co2": 0.438, "water": 0.006},
+            20: {"co2": 0.6205, "water": 0.0085}
         }
     },
     "NMC Cell 2": {
         "materials": {
-            "NCM - CAM powder": {"qty": 0.2, "unit": "kg"},
-            "SP-01 - carbon black cam": {"qty": 0.2, "unit": "kg"},
-            "PVDF-1 Cathode": {"qty": 0.2, "unit": "kg"},
-            "NMP - solvent": {"qty": 0.2, "unit": "kg"},
-            "Boehmite": {"qty": 0.2, "unit": "kg"},
-            "PVDF-2": {"qty": 0.2, "unit": "kg"},
-            "Graphite - 100% synthetic": {"qty": 0.2, "unit": "kg"},
-            "SWCNT Single wall Carbon Nano tube": {"qty": 0.2, "unit": "kg"},
-            "MWCNT Multiwall carbon nano tube": {"qty": 0.2, "unit": "kg"},
-            "PAA - anode binder": {"qty": 0.2, "unit": "kg"},
-            "Anoder Binder - SBR": {"qty": 0.2, "unit": "kg"},
-            "Thickener (CMC)": {"qty": 0.2, "unit": "kg"},
-            "Al Foil (Cell 2)": {"qty": 0.2, "unit": "kg"},
-            "Cu Foil (Cell 2)": {"qty": 0.2, "unit": "kg"},
-            "LT Electrolyte": {"qty": 0.2, "unit": "kg"},
-            "Separator": {"qty": 5.2, "unit": "m2"},
-            "Tape": {"qty": 0.4, "unit": "m2"},
-            "Aluminium Can (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Positive Top-cap (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Negative Top-cap (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Blue Film (Cell 2)": {"qty": 0.2, "unit": "m2"},
-            "Positive Vent Cover (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Negative Vent Cover (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Rubber Nail": {"qty": 1.0, "unit": "Units"},
-            "Al Nail (Seal Pin)": {"qty": 1.0, "unit": "Units"},
-            "Insulation Bracket (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Mylar Stack Wrap (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Mylar Reinforcing Strip (Cell 2)": {"qty": 1.0, "unit": "Units"},
-            "Mylar Tape": {"qty": 0.2, "unit": "m2"},
-            "Welding Printing Adhesive": {"qty": 0.2, "unit": "m2"},
-            "QR Code Tape": {"qty": 0.2, "unit": "m2"},
-            "Terminal Tape": {"qty": 0.2, "unit": "m2"},
-            "PET Film": {"qty": 0.2, "unit": "m2"}
+            "NCM": {"qty": 0.8234, "unit": "kg"},  # matched to "NCM"
+            "SP-01": {"qty": 0.0084, "unit": "kg"},  # matched
+            "PVDF-1": {"qty": 0.0084, "unit": "kg"},  # matched
+            "NMP": {"qty": 0.186, "unit": "kg"},  # matched
+            "Boehmite": {"qty": 0.0036, "unit": "kg"},  # matched
+            "PVDF-2": {"qty": 0.00049, "unit": "kg"},  # matched
+            "Graphite": {"qty": 0.5074, "unit": "kg"},  # matched
+            "SWCNT": {"qty": 0.0536, "unit": "kg"},  # matched
+            "MWCNT": {"qty": 0.07856, "unit": "kg"},  # matched
+            "PAA": {"qty": 0.1161, "unit": "kg"},  # matched
+            "Anoder Binder": {"qty": 0.0067, "unit": "kg"},  # matched
+            "Thickener (CMC)": {"qty": 0.0029, "unit": "kg"},  # matched
+            "Al Foil (Cell 2)": {"qty": 0.0961, "unit": "kg"},  # matched
+            "Cu Foil (Cell 2)": {"qty": 0.151, "unit": "kg"},  # matched
+            "LT Electrolyte": {"qty": 0.3395, "unit": "kg"},  # matched
+            "Separator": {"qty": 5.2675, "unit": "m2"},  # matched
+            "Tape": {"qty": 0.005, "unit": "m2"},  # matched
+            "Aluminium Can (Cell 2)": {"qty": 1.0, "unit": "Units"},  # matched
+            "Positive Top-cap (Cell 2)": {"qty": 1.0, "unit": "Units"},  # matched
+            "Negative Top-cap (Cell 2)": {"qty": 1.0, "unit": "Units"},  # matched
+            "Blue Film (Cell 2)": {"qty": 0.0917, "unit": "Units"},  # matched
+            "Positive Vent Cover (Cell 2)": {"qty": 1.0, "unit": "Units"},  # matched
+            "Negative Vent Cover (Cell 2)": {"qty": 1.0, "unit": "Units"},  # matched
+            "Rubber Nail": {"qty": 1.0, "unit": "Units"},  # matched
+            "Al Nail (Seal Pin)": {"qty": 1.0, "unit": "Units"},  # matched
+            "Insulation Bracket (Cell 2)": {"qty": 1.0, "unit": "Units"},  # matched
+            "Mylar Stack Wrap (Cell 2)": {"qty": 1.0, "unit": "Units"},  # matched
+            "Mylar Reinforcing Strip (Cell 2)": {"qty": 2.0, "unit": "Units"},  # matched
+            "Mylar Tape": {"qty": 0.0032, "unit": "m2"},  # matched
+            "Welding Printing Adhesive": {"qty": 0.0012, "unit": "m2"},  # matched
+            "QR Code Tape": {"qty": 0.0006, "unit": "m2"},  # matched
+            "Terminal Tape": {"qty": 0.003, "unit": "m2"},  # new
+            "PET Film": {"qty": 0.0008, "unit": "m2"}  # new
         },
         "base_co2_water_per_kwh": {"co2": 54.16, "water": 21.11},
         "silicon_co2_water_per_kwh": {
-            3: {"co2": 2, "water": 3},
+            3: {"co2": 0, "water": 0},
             5: {"co2": 3, "water": 4},
             10: {"co2": 4, "water": 5},
             15: {"co2": 5, "water": 6},
@@ -176,30 +176,27 @@ materials_data = {
     },
     "LFP": {
         "materials": {
-            "Polypropylene": {"qty": 0.3, "unit": "kg"},
-            "Aluminium Foil - Cathode": {"qty": 0.3, "unit": "kg"},
-            "NMP Solvent - Cathode": {"qty": 0.3, "unit": "kg"},
-            "SBR Binder - Cathode": {"qty": 0.3, "unit": "kg"},
-            "Polyethylene Terephthalate": {"qty": 0.3, "unit": "kg"},
-            "Anode Syn Graphite AAM": {"qty": 0.3, "unit": "kg"},
-            "PVDF Binder - Anode": {"qty": 0.3, "unit": "kg"},
-            "Cathode Active Material CAM + pCAM": {"qty": 0.3, "unit": "kg"},
-            "Li": {"qty": 0.3, "unit": "kg"},
-            "Can": {"qty": 0.3, "unit": "kg"},
-            "NMP Solvent - Anode": {"qty": 0.3, "unit": "kg"},
-            "CMC Binder - Anode": {"qty": 0.3, "unit": "kg"},
-            "Carbon Black - Anode": {"qty": 0.3, "unit": "kg"},
-            "SBR Binder - Anode": {"qty": 0.3, "unit": "kg"},
-            "PVDF Binder - Cathode": {"qty": 0.3, "unit": "kg"},
-            "Electrolyte": {"qty": 0.3, "unit": "kg"},
-            "Copper Foil - Anode": {"qty": 0.3, "unit": "kg"},
-            "Polyethylene - Separator": {"qty": 0.3, "unit": "kg"},
-            "CMC Binder - Cathode": {"qty": 0.3, "unit": "kg"},
-            "Carbon Black - Cathode": {"qty": 0.3, "unit": "kg"}
+            "Polypropylene": {"qty": 0.039, "unit": "kg"},  # unique
+            "Al Foil (LFP)": {"qty": 0.047, "unit": "kg"},  # standardized
+            "NMP": {"qty": 0.004, "unit": "kg"},  # matched
+            "Polyethylene Terephthalate": {"qty": 0.01, "unit": "kg"},  # unique
+            "Graphite": {"qty": 0.104, "unit": "kg"},  # matched
+            "PVDF-1": {"qty": 0.001, "unit": "kg"},  # matched
+            "CAM": {"qty": 0.379, "unit": "kg"},  # standardized CAM/pCAM into NCM baseline
+            "Li": {"qty": 0.0, "unit": "kg"},  # unique
+            "Aluminium Can (LFP)": {"qty": 0.3, "unit": "kg"},  # standardized
+            "CMC Binder (LFP)": {"qty": 0.0, "unit": "kg"},  # CMC grouped to baseline
+            "SP-01": {"qty": 0.0, "unit": "kg"},  # Carbon black matched
+            "PVDF-2": {"qty": 0.005, "unit": "kg"},  # cathode binder mapped
+            "LT Electrolyte": {"qty": 0.689, "unit": "kg"},  # standardized
+            "Cu Foil (LFP)": {"qty": 0.128, "unit": "kg"},  # standardized
+            "Separator": {"qty": 0.009, "unit": "kg"},  # standardized
+            "Plasticiser": {"qty": 0.0, "unit": "kg"}  # matched
         },
-        "base_co2_water_per_kwh": {"co2": 68.85 + 8, "water": 24.14 + 9}
+        "base_co2_water_per_kwh": {"co2": 65.32, "water": 34.6}
     }
 }
+
 
 # -------------------------
 # MATERIAL SOURCING UI (helper)
