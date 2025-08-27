@@ -1,0 +1,57 @@
+trigger:
+- main
+
+variables:
+  # Change these for your env
+  imageRepository: 'streamlit-app'
+  containerRegistry: 'agratasacr123.azurecr.io'   # ACR login server
+  dockerRegistryServiceConnection: 'acr-sc'       # Service connection name for ACR
+  webAppName: 'agratas-streamlit-web'             # Your Web App name
+  resourceGroupName: 'agratas-rg'                 # For AZ CLI (optional)
+  tag: '$(Build.BuildId)'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  jobs:
+  - job: BuildAndPush
+    steps:
+    - task: Docker@2
+      displayName: Build and push image
+      inputs:
+        command: buildAndPush
+        repository: '$(imageRepository)'
+        dockerfile: '**/Dockerfile'
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        tags: |
+          $(tag)
+
+    - script: echo "Built image: $(containerRegistry)/$(imageRepository):$(tag)"
+      displayName: Show image name
+
+- stage: Deploy
+  dependsOn: Build
+  jobs:
+  - job: DeployToWebApp
+    steps:
+    # Option A: Use dedicated task to update container image on Web App
+    - task: AzureWebAppContainer@2
+      displayName: Deploy container to Web App
+      inputs:
+        azureSubscription: 'azure-rm-sc'
+        appName: '$(webAppName)'
+        containers: '$(containerRegistry)/$(imageRepository):$(tag)'
+
+    # Optionally set env settings from pipeline if you haven't set them in Portal
+    - task: AzureCLI@2
+      displayName: Ensure WEBSITES_PORT is set
+      inputs:
+        azureSubscription: 'azure-rm-sc'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az webapp config appsettings set \
+            -g $(resourceGroupName) -n $(webAppName) \
+            --settings WEBSITES_PORT=8501 PORT=8501
