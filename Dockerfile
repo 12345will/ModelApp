@@ -14,4 +14,4 @@ COPY . .
 # Bind to 0.0.0.0 and respect a provided PORT (App Service sets WEBSITES_PORT internally)
 # Fall back to 8501 locally.
 ENV PORT=8501
-CMD ["bash", "-lc", "streamlit run app.py --server.address=0.0.0.0 --server.port=${PORT}"]
+CMD ["bash", "-lc", "streamlit run model.py --server.address=0.0.0.0 --server.port=${PORT}"]
